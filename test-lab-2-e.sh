@@ -6,9 +6,9 @@
 ###########################################
 
 DIR=$1
-TEST_FILE1=/run/shm/foo.txt
+TEST_FILE1=foo.txt
 TEST_FILE2=${DIR}/foo.txt
-SRCFILE=/run/shm/tmprand
+SRCFILE=tmprand
 
 dd if=/dev/urandom of=${SRCFILE} bs=1K count=400 >/dev/null 2>&1
 
