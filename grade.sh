@@ -2,7 +2,7 @@
 
 score=0
 
-mkdir myfs >/dev/null 2>&1
+mkdir yfs1 >/dev/null 2>&1
 
 ./start.sh
 
