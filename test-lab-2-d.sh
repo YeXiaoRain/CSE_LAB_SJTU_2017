@@ -19,18 +19,18 @@ then
     exit
 fi
 
-cp ${ORIG_FILE} yfs1/hosts_copy
-ln -s hosts_copy yfs1/testhostslink
-diff yfs1/testhostslink yfs1/hosts_copy >/dev/null 2>&1
+cp ${ORIG_FILE} ${DIR}/hosts_copy
+ln -s hosts_copy ${DIR}/testhostslink
+diff ${DIR}/testhostslink ${DIR}/hosts_copy >/dev/null 2>&1
 if [ $? -ne 0 ];
 then
     echo "failed SYMLINK test"
     exit
 fi
 
-rm yfs1/hosts_copy 
-touch yfs1/hosts_copy
-diff yfs1/testhostslink yfs1/hosts_copy >/dev/null 2>&1
+rm ${DIR}/hosts_copy 
+touch ${DIR}/hosts_copy
+diff ${DIR}/testhostslink ${DIR}/hosts_copy >/dev/null 2>&1
 if [ $? -ne 0 ];
 then 
     echo "failed SYMLINK test"
@@ -38,4 +38,3 @@ then
 fi
 
 echo "Passed SYMLINK TEST"
-
