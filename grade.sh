@@ -188,10 +188,10 @@ test_if_has_mount
 
 ##################################################################################
 lab3(){
-./test-lab-3-g yfs1 yfs2 | grep -q "test-lab-3-a: Passed all tests."
+./test-lab-3-g yfs1 yfs2 | grep -q "test-lab-3-g: Passed all tests."
 if [ $? -ne 0 ];
 then
-        echo "Failed test-f"
+        echo "Failed test-g"
 else
         #exit
 		ps -e | grep -q "yfs_client"
@@ -201,7 +201,7 @@ else
 				exit
 		else
 			score=$((score+20))
-			echo "Passed test-lab-3-a (consistency)"
+			echo "Passed test-lab-3-g (consistency)"
 			#echo $score
 		fi
 fi
