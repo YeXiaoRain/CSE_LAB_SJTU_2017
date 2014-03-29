@@ -12,4 +12,4 @@ $UMOUNT $YFSDIR1
 $UMOUNT $YFSDIR2
 killall extent_server
 killall yfs_client
-# killall lock_server
+killall lock_server

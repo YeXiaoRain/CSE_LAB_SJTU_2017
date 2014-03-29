@@ -1,4 +1,4 @@
-LAB=3
+LAB=4
 SOL=0
 RPC=./rpc
 LAB1GE=$(shell expr $(LAB) \>\= 1)
@@ -8,9 +8,8 @@ LAB4GE=$(shell expr $(LAB) \>\= 4)
 LAB5GE=$(shell expr $(LAB) \>\= 5)
 LAB6GE=$(shell expr $(LAB) \>\= 6)
 LAB7GE=$(shell expr $(LAB) \>\= 7)
-CXXFLAGS = -g -MMD -Wall -I. -I$(RPC) -DLAB=$(LAB) -DSOL=$(SOL) -D_FILE_OFFSET_BITS=64
+CXXFLAGS =  -g -MMD -Wall -I. -I$(RPC) -DLAB=$(LAB) -DSOL=$(SOL) -D_FILE_OFFSET_BITS=64
 FUSEFLAGS= -D_FILE_OFFSET_BITS=64 -DFUSE_USE_VERSION=25 -I/usr/local/include/fuse -I/usr/include/fuse
-
 
 # choose librpc based on architecture
 ifeq ($(shell getconf LONG_BIT),64)
@@ -46,11 +45,12 @@ lab:  lab$(LAB)
 lab1: lab1_tester
 lab2: yfs_client 
 lab3: yfs_client extent_server test-lab-3-g
-lab4: yfs_client extent_server lock_server lock_tester test-lab-3-b\
-	 test-lab-3-c
-lab5: yfs_client extent_server lock_server test-lab-3-b test-lab-3-c
-lab6: lock_server rsm_tester
-lab7: lock_tester lock_server rsm_tester
+lab4: lock_server lock_tester lock_demo yfs_client extent_server test-lab-4-a test-lab-4-b
+lab5: yfs_client extent_server lock_server lock_tester test-lab-4-b\
+	 test-lab-4-c
+lab6: yfs_client extent_server lock_server test-lab-4-b test-lab-4-c
+lab7: lock_server rsm_tester
+lab8: lock_tester lock_server rsm_tester
 
 hfiles1=rpc/fifo.h rpc/connection.h rpc/rpc.h rpc/marshall.h rpc/method_thread.h\
 	rpc/thr_pool.h rpc/pollmgr.h rpc/jsl_log.h rpc/slock.h rpc/rpctest.cc\
@@ -62,13 +62,6 @@ hfiles4=log.h rsm.h rsm_protocol.h config.h paxos.h paxos_protocol.h rsm_state_t
 hfiles5=rsm_state_transfer.h rsm_client.h
 rsm_files = rsm.cc paxos.cc config.cc log.cc handle.cc
 
-
-# rpclib=rpc/rpc.cc rpc/connection.cc rpc/pollmgr.cc rpc/thr_pool.cc rpc/jsl_log.cc gettime.cc
-# rpc/librpc.a: $(patsubst %.cc,%.o,$(rpclib))
-# 	rm -f $@
-# 	ar cq $@ $^
-# 	ranlib rpc/librpc.a
-
 rpc/rpctest=rpc/rpctest.cc
 rpc/rpctest: $(patsubst %.cc,%.o,$(rpctest)) rpc/$(RPCLIB)
 
@@ -76,7 +69,7 @@ lock_demo=lock_demo.cc lock_client.cc
 lock_demo : $(patsubst %.cc,%.o,$(lock_demo)) rpc/$(RPCLIB)
 
 lock_tester=lock_tester.cc lock_client.cc
-ifeq ($(LAB4GE),1)
+ifeq ($(LAB5GE),1)
   lock_tester += lock_client_cache.cc
 endif
 ifeq ($(LAB7GE),1)
@@ -85,7 +78,7 @@ endif
 lock_tester : $(patsubst %.cc,%.o,$(lock_tester)) rpc/$(RPCLIB)
 
 lock_server=lock_server.cc lock_smain.cc
-ifeq ($(LAB4GE),1)
+ifeq ($(LAB5GE),1)
   lock_server+=lock_server_cache.cc handle.cc
 endif
 ifeq ($(LAB6GE),1)
@@ -100,13 +93,13 @@ lock_server : $(patsubst %.cc,%.o,$(lock_server)) rpc/$(RPCLIB)
 lab1_tester=lab1_tester.cc extent_client.cc extent_server.cc inode_manager.cc
 lab1_tester : $(patsubst %.cc,%.o,$(lab1_tester))
 yfs_client=yfs_client.cc extent_client.cc fuse.cc extent_server.cc inode_manager.cc
-ifeq ($(LAB4GE),1)
+ifeq ($(LAB3GE),1)
   yfs_client += lock_client.cc
 endif
 ifeq ($(LAB7GE),1)
   yfs_client += rsm_client.cc lock_client_cache_rsm.cc
 endif
-ifeq ($(LAB4GE),1)
+ifeq ($(LAB5GE),1)
   yfs_client += lock_client_cache.cc
 endif
 yfs_client : $(patsubst %.cc,%.o,$(yfs_client)) rpc/$(RPCLIB)
@@ -135,7 +128,7 @@ fuse.o: fuse.cc
 -include *.d
 -include rpc/*.d
 
-clean_files=rpc/rpctest rpc/*.o rpc/*.d *.o *.d yfs_client extent_server lock_server lock_tester lock_demo rpctest test-lab-3-a test-lab-3-b test-lab-3-c test-lab-3-g rsm_tester lab1_tester demo_client demo_server
+clean_files=rpc/rpctest rpc/*.o rpc/*.d *.o *.d yfs_client extent_server lock_server lock_tester lock_demo rpctest test-lab-3-a test-lab-3-b test-lab-3-c test-lab-4-a test-lab-4-b rsm_tester lab1_tester
 .PHONY: clean handin
 clean: 
 	rm $(clean_files) -rf 
@@ -145,15 +138,5 @@ handin_file=lab$(LAB).tgz
 labdir=$(shell basename $(PWD))
 handin: 
 	@bash -c "cd ../; tar -X <(tr ' ' '\n' < <(echo '$(handin_ignore)')) -czvf $(handin_file) $(labdir); mv $(handin_file) $(labdir); cd $(labdir)"
-	@echo Please modify lab3.tgz to lab3_[your student id].tgz and upload it to ftp://xiaodi:public@public.sjtu.edu.cn/upload/lab3
+	@echo Please modify lab4.tgz to lab4_[your student id].tgz and upload it to ftp://xiaodi:public@public.sjtu.edu.cn/upload/lab4	
 	@echo Thanks!
-
-# r[c de,p
-rpcdemo: demo_server demo_client
-
-demo_client:
-	$(CXX) $(CXXFLAGS) demo_client.cc rpc/$(RPCLIB) $(LDFLAGS) $(LDLIBS) -o demo_client
-
-demo_server:
-	$(CXX) $(CXXFLAGS) demo_server.cc rpc/$(RPCLIB) $(LDFLAGS) $(LDLIBS) -o demo_server
-
