@@ -2,7 +2,7 @@
 #define yfs_client_h
 
 #include <string>
-//#include "yfs_protocol.h"
+
 #include "extent_client.h"
 #include <vector>
 
@@ -36,8 +36,7 @@ class yfs_client {
   static inum n2i(std::string);
 
  public:
-  yfs_client();
-  yfs_client(std::string, std::string);
+  yfs_client(std::string);
 
   bool isfile(inum);
   bool isdir(inum);
