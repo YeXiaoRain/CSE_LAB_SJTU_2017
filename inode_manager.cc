@@ -10,22 +10,19 @@ disk::disk()
 void
 disk::read_block(blockid_t id, char *buf)
 {
-  /*
-   *your lab1 code goes here.
-   *if id is smaller than 0 or larger than BLOCK_NUM 
-   *or buf is null, just return.
-   *put the content of target block into buf.
-   *hint: use memcpy
-  */
+  if (id < 0 || id >= BLOCK_NUM || buf == NULL)
+    return;
+
+  memcpy(buf, blocks[id], BLOCK_SIZE);
 }
 
 void
 disk::write_block(blockid_t id, const char *buf)
 {
-  /*
-   *your lab1 code goes here.
-   *hint: just like read_block
-  */
+  if (id < 0 || id >= BLOCK_NUM || buf == NULL)
+    return;
+
+  memcpy(blocks[id], buf, BLOCK_SIZE);
 }
 
 // block layer -----------------------------------------
@@ -38,11 +35,8 @@ block_manager::alloc_block()
    * your lab1 code goes here.
    * note: you should mark the corresponding bit in block bitmap when alloc.
    * you need to think about which block you can start to be allocated.
-
-   *hint: use macro IBLOCK and BBLOCK.
-          use bit operation.
-          remind yourself of the layout of disk.
    */
+
   return 0;
 }
 
@@ -53,6 +47,8 @@ block_manager::free_block(uint32_t id)
    * your lab1 code goes here.
    * note: you should unmark the corresponding bit in the block bitmap when free.
    */
+  
+  return;
 }
 
 // The layout of disk should be like this:
@@ -101,8 +97,6 @@ inode_manager::alloc_inode(uint32_t type)
    * your lab1 code goes here.
    * note: the normal inode block should begin from the 2nd inode block.
    * the 1st is used for root_dir, see inode_manager::inode_manager().
-    
-   * if you get some heap memory, do not forget to free it.
    */
   return 1;
 }
@@ -114,8 +108,9 @@ inode_manager::free_inode(uint32_t inum)
    * your lab1 code goes here.
    * note: you need to check if the inode is already a freed one;
    * if not, clear it, and remember to write back to disk.
-   * do not forget to free memory if necessary.
    */
+
+  return;
 }
 
 
@@ -175,8 +170,10 @@ inode_manager::read_file(uint32_t inum, char **buf_out, int *size)
   /*
    * your lab1 code goes here.
    * note: read blocks related to inode number inum,
-   * and copy them to buf_out
+   * and copy them to buf_Out
    */
+  
+  return;
 }
 
 /* alloc/free blocks if needed */
@@ -187,9 +184,10 @@ inode_manager::write_file(uint32_t inum, const char *buf, int size)
    * your lab1 code goes here.
    * note: write buf to blocks of inode inum.
    * you need to consider the situation when the size of buf 
-   * is larger or smaller than the size of original inode.
-   * you should free some blocks if necessary.
+   * is larger or smaller than the size of original inode
    */
+  
+  return;
 }
 
 void
@@ -200,6 +198,8 @@ inode_manager::getattr(uint32_t inum, extent_protocol::attr &a)
    * note: get the attributes of inode inum.
    * you can refer to "struct attr" in extent_protocol.h
    */
+  
+  return;
 }
 
 void
@@ -208,6 +208,7 @@ inode_manager::remove_file(uint32_t inum)
   /*
    * your lab1 code goes here
    * note: you need to consider about both the data block and inode of the file
-   * do not forget to free memory if necessary.
    */
+  
+  return;
 }
