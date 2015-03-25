@@ -4,7 +4,7 @@
 #define inode_h
 
 #include <stdint.h>
-#include "extent_protocol.h"
+#include "extent_protocol.h" // TODO: delete it
 
 #define DISK_SIZE  1024*1024*16
 #define BLOCK_SIZE 512
@@ -63,13 +63,12 @@ class block_manager {
 // Block containing bit for block b
 #define BBLOCK(b) ((b)/BPB + 2)
 
-#define NDIRECT 32
+#define NDIRECT 100
 #define NINDIRECT (BLOCK_SIZE / sizeof(uint))
 #define MAXFILE (NDIRECT + NINDIRECT)
 
 typedef struct inode {
-  //short type;
-  unsigned int type;
+  short type;
   unsigned int size;
   unsigned int atime;
   unsigned int mtime;
