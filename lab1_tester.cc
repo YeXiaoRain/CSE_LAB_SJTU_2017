@@ -15,7 +15,10 @@
  * 
  * -----------------
  * 
- * 
+ * By Gu Jinyu
+ *  
+ *  for CSE-2015
+ * -----------------
  * */
 
 
@@ -206,15 +209,18 @@ int test_remove()
     for (i = 0; i < FILE_NUM; i++) {
         memset(&a, 0, sizeof(a));
         id = (extent_protocol::extentid_t)(i+2);
+        
         if (ec->remove(id) != extent_protocol::OK) {
             iprint("error removing, return not OK\n");
             return 1;
         }
+
         ec->getattr(id, a);
         if (a.type != 0) {
-            iprint("error removing, type is still positive\n");
+            iprint("error removing, inode is still used\n");
             return 2;
         }
+
     }
     total_score += 20; 
     printf("========== pass test remove ==========\n");
