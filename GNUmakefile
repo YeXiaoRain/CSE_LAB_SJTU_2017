@@ -1,4 +1,4 @@
-LAB=4
+LAB=5
 SOL=0
 RPC=./rpc
 LAB1GE=$(shell expr $(LAB) \>\= 1)
@@ -46,8 +46,7 @@ lab1: lab1_tester
 lab2: yfs_client 
 lab3: yfs_client extent_server test-lab-3-g
 lab4: lock_server lock_tester lock_demo yfs_client extent_server test-lab-4-a test-lab-4-b
-lab5: yfs_client extent_server lock_server lock_tester test-lab-4-b\
-	 test-lab-4-c
+lab5: lock_server lock_tester lock_demo yfs_client extent_server test-lab-5
 lab6: yfs_client extent_server lock_server test-lab-4-b test-lab-4-c
 lab7: lock_server rsm_tester
 lab8: lock_tester lock_server rsm_tester
@@ -69,18 +68,12 @@ lock_demo=lock_demo.cc lock_client.cc
 lock_demo : $(patsubst %.cc,%.o,$(lock_demo)) rpc/$(RPCLIB)
 
 lock_tester=lock_tester.cc lock_client.cc
-ifeq ($(LAB5GE),1)
-  lock_tester += lock_client_cache.cc
-endif
 ifeq ($(LAB7GE),1)
   lock_tester+=rsm_client.cc handle.cc lock_client_cache_rsm.cc
 endif
 lock_tester : $(patsubst %.cc,%.o,$(lock_tester)) rpc/$(RPCLIB)
 
 lock_server=lock_server.cc lock_smain.cc
-ifeq ($(LAB5GE),1)
-  lock_server+=lock_server_cache.cc handle.cc
-endif
 ifeq ($(LAB6GE),1)
   lock_server+= $(rsm_files)
 endif
@@ -90,21 +83,18 @@ endif
 
 lock_server : $(patsubst %.cc,%.o,$(lock_server)) rpc/$(RPCLIB)
 
-lab1_tester=lab1_tester.cc extent_client.cc extent_server.cc inode_manager.cc
+lab1_tester=lab1_tester.cc extent_client.cc extent_server.cc inode_manager.cc disk.cc
 lab1_tester : $(patsubst %.cc,%.o,$(lab1_tester))
-yfs_client=yfs_client.cc extent_client.cc fuse.cc extent_server.cc inode_manager.cc
+yfs_client=yfs_client.cc extent_client.cc fuse.cc extent_server.cc inode_manager.cc disk.cc
 ifeq ($(LAB3GE),1)
   yfs_client += lock_client.cc
 endif
 ifeq ($(LAB7GE),1)
   yfs_client += rsm_client.cc lock_client_cache_rsm.cc
 endif
-ifeq ($(LAB5GE),1)
-  yfs_client += lock_client_cache.cc
-endif
 yfs_client : $(patsubst %.cc,%.o,$(yfs_client)) rpc/$(RPCLIB)
 
-extent_server=extent_server.cc extent_smain.cc inode_manager.cc
+extent_server=extent_server.cc extent_smain.cc inode_manager.cc disk.cc
 extent_server : $(patsubst %.cc,%.o,$(extent_server)) rpc/$(RPCLIB)
 
 test-lab-3-b=test-lab-3-b.c
@@ -128,7 +118,7 @@ fuse.o: fuse.cc
 -include *.d
 -include rpc/*.d
 
-clean_files=rpc/rpctest rpc/*.o rpc/*.d *.o *.d yfs_client extent_server lock_server lock_tester lock_demo rpctest test-lab-3-a test-lab-3-b test-lab-3-c test-lab-4-a test-lab-4-b rsm_tester lab1_tester
+clean_files=rpc/rpctest rpc/*.o rpc/*.d *.o *.d yfs_client extent_server lock_server lock_tester lock_demo rpctest test-lab-3-a test-lab-3-b test-lab-3-c test-lab-4-a test-lab-4-b test-lab-5 rsm_tester lab1_tester
 .PHONY: clean handin
 clean: 
 	rm $(clean_files) -rf 
@@ -138,5 +128,5 @@ handin_file=lab$(LAB).tgz
 labdir=$(shell basename $(PWD))
 handin: 
 	@bash -c "cd ../; tar -X <(tr ' ' '\n' < <(echo '$(handin_ignore)')) -czvf $(handin_file) $(labdir); mv $(handin_file) $(labdir); cd $(labdir)"
-	@echo Please modify lab4.tgz to lab4_[your student id].tgz and upload it to ftp://xiaodi:public@public.sjtu.edu.cn/upload/lab4	
+	@echo Please modify lab5.tgz to lab5_[your student id].tgz and upload it to ftp.
 	@echo Thanks!
