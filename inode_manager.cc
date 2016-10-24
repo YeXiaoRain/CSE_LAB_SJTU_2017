@@ -1,5 +1,7 @@
 #include "inode_manager.h"
 
+// block layer -----------------------------------------
+
 // Allocate a free disk block.
 blockid_t
 block_manager::alloc_block()
