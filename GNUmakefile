@@ -1,4 +1,4 @@
-LAB=5
+LAB=6
 SOL=0
 RPC=./rpc
 LAB1GE=$(shell expr $(LAB) \>\= 1)
@@ -47,7 +47,7 @@ lab2: yfs_client
 lab3: yfs_client extent_server test-lab-3-g
 lab4: lock_server lock_tester lock_demo yfs_client extent_server test-lab-4-a test-lab-4-b
 lab5: lock_server lock_tester lock_demo yfs_client extent_server test-lab-5
-lab6: yfs_client extent_server lock_server test-lab-4-b test-lab-4-c
+lab6: lock_server lock_tester lock_demo yfs_client extent_server test-lab-6
 lab7: lock_server rsm_tester
 lab8: lock_tester lock_server rsm_tester
 
@@ -59,6 +59,7 @@ hfiles2=yfs_client.h extent_client.h extent_protocol.h extent_server.h
 hfiles3=lock_client_cache.h lock_server_cache.h handle.h tprintf.h
 hfiles4=log.h rsm.h rsm_protocol.h config.h paxos.h paxos_protocol.h rsm_state_transfer.h rsmtest_client.h tprintf.h
 hfiles5=rsm_state_transfer.h rsm_client.h
+hfiles6=log.h rsm.h rsm_protocol.h config.h paxos.h paxos_protocol.h rsm_state_transfer.h rsmtest_client.h tprintf.h
 rsm_files = rsm.cc paxos.cc config.cc log.cc handle.cc
 
 rpc/rpctest=rpc/rpctest.cc
@@ -74,9 +75,9 @@ endif
 lock_tester : $(patsubst %.cc,%.o,$(lock_tester)) rpc/$(RPCLIB)
 
 lock_server=lock_server.cc lock_smain.cc
-ifeq ($(LAB6GE),1)
-  lock_server+= $(rsm_files)
-endif
+# ifeq ($(LAB6GE),1)
+#   lock_server+= $(rsm_files)
+# endif
 ifeq ($(LAB7GE),1)
   lock_server+= lock_server_cache_rsm.cc
 endif
@@ -118,7 +119,7 @@ fuse.o: fuse.cc
 -include *.d
 -include rpc/*.d
 
-clean_files=rpc/rpctest rpc/*.o rpc/*.d *.o *.d yfs_client extent_server lock_server lock_tester lock_demo rpctest test-lab-3-a test-lab-3-b test-lab-3-c test-lab-4-a test-lab-4-b test-lab-5 rsm_tester lab1_tester
+clean_files=rpc/rpctest rpc/*.o rpc/*.d *.o *.d yfs_client extent_server lock_server lock_tester lock_demo rpctest test-lab-3-a test-lab-3-b test-lab-3-c test-lab-4-a test-lab-4-b test-lab-5 test-lab-6 rsm_tester lab1_tester
 .PHONY: clean handin
 clean: 
 	rm $(clean_files) -rf 
@@ -128,5 +129,5 @@ handin_file=lab$(LAB).tgz
 labdir=$(shell basename $(PWD))
 handin: 
 	@bash -c "cd ../; tar -X <(tr ' ' '\n' < <(echo '$(handin_ignore)')) -czvf $(handin_file) $(labdir); mv $(handin_file) $(labdir); cd $(labdir)"
-	@echo Please modify lab5.tgz to lab5_[your student id].tgz and upload it to ftp.
+	@echo Please modify lab6.tgz to lab6_[your student id].tgz and upload it to ftp.
 	@echo Thanks!
