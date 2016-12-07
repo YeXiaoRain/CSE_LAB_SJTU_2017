@@ -45,30 +45,31 @@ getattr(yfs_client::inum inum, struct stat &st)
     bzero(&st, sizeof(st));
 
     st.st_ino = inum;
-    printf("getattr %016llx %d\n", inum, yfs->isfile(inum));
     if(yfs->isfile(inum)){
         yfs_client::fileinfo info;
         ret = yfs->getfile(inum, info);
         if(ret != yfs_client::OK)
             return ret;
-        st.st_mode = S_IFREG | 0666;
+        st.st_mode = S_IFREG | (info.mode & 0777);
         st.st_nlink = 1;
         st.st_atime = info.atime;
         st.st_mtime = info.mtime;
         st.st_ctime = info.ctime;
         st.st_size = info.size;
-        printf("   getattr -> %llu\n", info.size);
+		st.st_uid = info.uid;
+		st.st_gid = info.gid;
     } else {
         yfs_client::dirinfo info;
         ret = yfs->getdir(inum, info);
         if(ret != yfs_client::OK)
             return ret;
-        st.st_mode = S_IFDIR | 0777;
+        st.st_mode = S_IFDIR | (info.mode & 0777);
         st.st_nlink = 2;
         st.st_atime = info.atime;
         st.st_mtime = info.mtime;
         st.st_ctime = info.ctime;
-        printf("   getattr -> %lu %lu %lu\n", info.atime, info.mtime, info.ctime);
+		st.st_uid = info.uid;
+		st.st_gid = info.gid;
     }
     return yfs_client::OK;
 }
@@ -98,8 +99,12 @@ fuseserver_getattr(fuse_req_t req, fuse_ino_t ino,
 
     ret = getattr(inum, st);
     if(ret != yfs_client::OK){
-        fuse_reply_err(req, ENOENT);
-        return;
+		if (ret == yfs_client::NOPEM) {
+			fuse_reply_err(req, EACCES);
+		} else {
+        	fuse_reply_err(req, ENOENT);
+		}
+		return;
     }
     fuse_reply_attr(req, &st, 0);
 }
@@ -117,21 +122,40 @@ fuseserver_getattr(fuse_req_t req, fuse_ino_t ino,
 // On success, call fuse_reply_attr, passing the file's new
 // attributes (from a call to getattr()).
 //
+
+#define LAB6_ATTR_MASK  FUSE_SET_ATTR_SIZE|FUSE_SET_ATTR_GID|FUSE_SET_ATTR_UID|FUSE_SET_ATTR_MODE
+
 void
 fuseserver_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr,
         int to_set, struct fuse_file_info *fi)
 {
     printf("fuseserver_setattr 0x%x\n", to_set);
-    if (FUSE_SET_ATTR_SIZE & to_set) {
-        printf("   fuseserver_setattr set size to %zu\n", attr->st_size);
+	printf("attr->mode %o\n", attr->st_mode);
+	printf("attr->u_id %d\n", attr->st_uid);
+	printf("attr->g_id %d\n", attr->st_gid);
+
+	yfs_client::status ret;
+
+	if (LAB6_ATTR_MASK & to_set) {
         struct stat st;
+		yfs_client::filestat fst;
+		fst.mode = attr->st_mode;
+		fst.uid = attr->st_uid;
+		fst.gid = attr->st_gid;
+		fst.size = attr->st_size;
 
 #if 1
         // Change the above line to "#if 1", and your code goes here
         // Note: fill st using getattr before fuse_reply_attr
-        if (to_set & FUSE_SET_ATTR_SIZE) {
-            yfs->setattr(ino, attr->st_size);
-        }
+        ret = yfs->setattr(ino, fst, to_set);
+		if (ret != yfs_client::OK) {
+			if (ret == yfs_client::NOPEM) {
+				fuse_reply_err(req, EACCES);
+			} else {
+        		fuse_reply_err(req, ENOENT);
+			}
+			return ;
+		}
         getattr(ino, st);
         fuse_reply_attr(req, &st, 0);
 #else
@@ -166,7 +190,11 @@ fuseserver_read(fuse_req_t req, fuse_ino_t ino, size_t size,
     if ((r = yfs->read(ino, size, off, buf)) == yfs_client::OK) {
         fuse_reply_buf(req, buf.data(), buf.size());    
     } else {
-        fuse_reply_err(req, ENOENT);
+		if (r == yfs_client::NOPEM) {
+			fuse_reply_err(req, EACCES);
+		} else {
+        	fuse_reply_err(req, ENOENT);
+		}
     }
 #else
     fuse_reply_err(req, ENOSYS);
@@ -201,7 +229,11 @@ fuseserver_write(fuse_req_t req, fuse_ino_t ino,
     if ((r = yfs->write(ino, size, off, buf, size)) == yfs_client::OK) {
         fuse_reply_write(req, size);
     } else {
-        fuse_reply_err(req, ENOENT);
+		if (r == yfs_client::NOPEM) {
+			fuse_reply_err(req, EACCES);
+		} else {
+        	fuse_reply_err(req, ENOENT);
+		}
     }
 #else
     fuse_reply_err(req, ENOSYS);
@@ -260,7 +292,9 @@ fuseserver_create(fuse_req_t req, fuse_ino_t parent, const char *name,
     } else {
         if (ret == yfs_client::EXIST) {
             fuse_reply_err(req, EEXIST);
-        }else{
+        } else if (ret == yfs_client::NOPEM) {
+			fuse_reply_err(req, EACCES);
+		}else{
             fuse_reply_err(req, ENOENT);
         }
     }
@@ -275,7 +309,9 @@ void fuseserver_mknod( fuse_req_t req, fuse_ino_t parent,
     } else {
         if (ret == yfs_client::EXIST) {
             fuse_reply_err(req, EEXIST);
-        }else{
+        }else if (ret == yfs_client::NOPEM) {
+			fuse_reply_err(req, EACCES);
+		}else{
             fuse_reply_err(req, ENOENT);
         }
     }
@@ -295,16 +331,21 @@ fuseserver_lookup(fuse_req_t req, fuse_ino_t parent, const char *name)
     e.entry_timeout = 0.0;
     e.generation = 0;
     bool found = false;
+	yfs_client::status ret;
 
      yfs_client::inum ino;
-     yfs->lookup(parent, name, found, ino);
+     ret = yfs->lookup(parent, name, found, ino);
 
+	if (ret == yfs_client::NOPEM){
+		fuse_reply_err(req, EACCES);
+		return;
+	}
     if (found) {
         e.ino = ino;
         getattr(ino, e.attr);
         fuse_reply_entry(req, &e);
     } else {
-        fuse_reply_err(req, ENOENT);
+        	fuse_reply_err(req, ENOENT);
     }
 
 }
@@ -410,7 +451,9 @@ fuseserver_mkdir(fuse_req_t req, fuse_ino_t parent, const char *name,
     } else {
         if (ret == yfs_client::EXIST) {
             fuse_reply_err(req, EEXIST);
-        } else {
+        } else if (ret == yfs_client::NOPEM) {
+			fuse_reply_err(req, EACCES);
+		}else {
             fuse_reply_err(req, ENOENT);
         }
     }
@@ -436,7 +479,9 @@ fuseserver_unlink(fuse_req_t req, fuse_ino_t parent, const char *name)
     } else {
         if (r == yfs_client::NOENT) {
             fuse_reply_err(req, ENOENT);
-        } else {
+        } else if (r == yfs_client::NOPEM) {
+			fuse_reply_err(req, EACCES);
+		}else{
             fuse_reply_err(req, ENOTEMPTY);
         }
     }
@@ -469,8 +514,8 @@ main(int argc, char *argv[])
     setvbuf(stdout, NULL, _IONBF, 0);
 
 #if 1
-    if(argc != 4){
-        fprintf(stderr, "Usage: yfs_client <mountpoint> <port-extent-server> <port-lock-server>\n");
+    if(argc != 5){
+        fprintf(stderr, "Usage: yfs_client <mountpoint> <port-extent-server> <port-lock-server> <user-cerficiate-file>\n");
         exit(1);
     }
 #else
@@ -485,7 +530,7 @@ main(int argc, char *argv[])
 
     myid = random();
 
-    yfs = new yfs_client(argv[2], argv[3]);
+    yfs = new yfs_client(argv[2], argv[3], argv[4]);
     // yfs = new yfs_client();
 
     fuseserver_oper.getattr    = fuseserver_getattr;

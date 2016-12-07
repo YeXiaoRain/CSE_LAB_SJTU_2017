@@ -11,26 +11,48 @@
 #include <vector>
 
 
+#define CA_FILE "./cert/ca.pem:
+#define USERFILE	"./etc/passwd"
+#define GROUPFILE	"./etc/group"
+
+
 class yfs_client {
   extent_client *ec;
   lock_client *lc;
  public:
 
   typedef unsigned long long inum;
-  enum xxstatus { OK, RPCERR, NOENT, IOERR, EXIST };
+  enum xxstatus { OK, RPCERR, NOENT, IOERR, EXIST,
+  			NOPEM, ERRPEM, EINVA, ECTIM, ENUSE };
+
   typedef int status;
+
+
+  struct filestat {
+  	unsigned long long size;
+	unsigned long mode;
+	unsigned short uid;
+	unsigned short gid;
+  };
 
   struct fileinfo {
     unsigned long long size;
     unsigned long atime;
     unsigned long mtime;
     unsigned long ctime;
+	unsigned long mode;
+	unsigned short uid;
+	unsigned short gid;
   };
   struct dirinfo {
     unsigned long atime;
     unsigned long mtime;
     unsigned long ctime;
+	unsigned long mode;
+	unsigned short uid;
+	unsigned short gid;
   };
+
   struct dirent {
     std::string name;
     yfs_client::inum inum;
@@ -41,7 +63,8 @@ class yfs_client {
   static inum n2i(std::string);
 
  public:
-  yfs_client(std::string, std::string);
+  yfs_client();
+  yfs_client(std::string, std::string, const char*);
 
   bool isfile(inum);
   bool isdir(inum);
@@ -49,7 +72,7 @@ class yfs_client {
   int getfile(inum, fileinfo &);
   int getdir(inum, dirinfo &);
 
-  int setattr(inum, size_t);
+  int setattr(inum, filestat, unsigned long);
   int lookup(inum, const char *, bool &, inum &);
   int create(inum, const char *, mode_t, inum &);
   int readdir(inum, std::list<dirent> &);
@@ -57,6 +80,8 @@ class yfs_client {
   int read(inum, size_t, off_t, std::string &);
   int unlink(inum,const char *);
   int mkdir(inum , const char *, mode_t , inum &);
+
+  int verify(const char* cert_file, unsigned short*);
 };
 
 #endif 

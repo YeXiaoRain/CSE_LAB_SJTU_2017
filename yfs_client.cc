@@ -9,12 +9,26 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-yfs_client::yfs_client(std::string extent_dst, std::string lock_dst)
+yfs_client::yfs_client()
+{
+  ec = NULL;
+  lc = NULL;
+}
+
+yfs_client::yfs_client(std::string extent_dst, std::string lock_dst, const char* cert_file)
 {
   ec = new extent_client(extent_dst);
   lc = new lock_client(lock_dst);
   if (ec->put(1, "") != extent_protocol::OK)
       printf("error init root dir\n"); // XYB: init root dir
+}
+
+int
+yfs_client::verify(const char* name, unsigned short *uid)
+{
+  	int ret = OK;
+
+	return ret;
 }
 
 
@@ -111,7 +125,7 @@ release:
 
 // Only support set size of attr
 int
-yfs_client::setattr(inum ino, size_t size)
+yfs_client::setattr(inum ino, filestat st, unsigned long toset)
 {
     int r = OK;
 

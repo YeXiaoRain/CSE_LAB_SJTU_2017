@@ -1,4 +1,4 @@
-LAB=6
+LAB=7
 SOL=0
 RPC=./rpc
 LAB1GE=$(shell expr $(LAB) \>\= 1)
@@ -8,7 +8,7 @@ LAB4GE=$(shell expr $(LAB) \>\= 4)
 LAB5GE=$(shell expr $(LAB) \>\= 5)
 LAB6GE=$(shell expr $(LAB) \>\= 6)
 LAB7GE=$(shell expr $(LAB) \>\= 7)
-CXXFLAGS =  -g -MMD -Wall -I. -I$(RPC) -DLAB=$(LAB) -DSOL=$(SOL) -D_FILE_OFFSET_BITS=64
+CXXFLAGS =  -g -MMD -I. -I$(RPC) -DLAB=$(LAB) -DSOL=$(SOL) -D_FILE_OFFSET_BITS=64
 FUSEFLAGS= -D_FILE_OFFSET_BITS=64 -DFUSE_USE_VERSION=25 -I/usr/local/include/fuse -I/usr/include/fuse
 
 # choose librpc based on architecture
@@ -36,6 +36,11 @@ ifeq ($(LAB1GE),1)
     LDLIBS += -lfuse
   endif
 endif
+
+ifeq ($(LAB6GE),1)
+	LDLIBS += -lssl -lcrypto
+endif
+
 LDLIBS += $(shell test -f `gcc -print-file-name=librt.so` && echo -lrt)
 LDLIBS += $(shell test -f `gcc -print-file-name=libdl.so` && echo -ldl)
 CC = g++
@@ -47,8 +52,8 @@ lab2: yfs_client
 lab3: yfs_client extent_server test-lab-3-g
 lab4: lock_server lock_tester lock_demo yfs_client extent_server test-lab-4-a test-lab-4-b
 lab5: lock_server lock_tester lock_demo yfs_client extent_server test-lab-5
-lab6: lock_server lock_tester lock_demo yfs_client extent_server test-lab-6
-lab7: lock_server rsm_tester
+
+lab7: lock_server lock_tester lock_demo yfs_client extent_server test_lab_7
 lab8: lock_tester lock_server rsm_tester
 
 hfiles1=rpc/fifo.h rpc/connection.h rpc/rpc.h rpc/marshall.h rpc/method_thread.h\
@@ -59,7 +64,6 @@ hfiles2=yfs_client.h extent_client.h extent_protocol.h extent_server.h
 hfiles3=lock_client_cache.h lock_server_cache.h handle.h tprintf.h
 hfiles4=log.h rsm.h rsm_protocol.h config.h paxos.h paxos_protocol.h rsm_state_transfer.h rsmtest_client.h tprintf.h
 hfiles5=rsm_state_transfer.h rsm_client.h
-hfiles6=log.h rsm.h rsm_protocol.h config.h paxos.h paxos_protocol.h rsm_state_transfer.h rsmtest_client.h tprintf.h
 rsm_files = rsm.cc paxos.cc config.cc log.cc handle.cc
 
 rpc/rpctest=rpc/rpctest.cc
@@ -69,31 +73,28 @@ lock_demo=lock_demo.cc lock_client.cc
 lock_demo : $(patsubst %.cc,%.o,$(lock_demo)) rpc/$(RPCLIB)
 
 lock_tester=lock_tester.cc lock_client.cc
-ifeq ($(LAB7GE),1)
-  lock_tester+=rsm_client.cc handle.cc lock_client_cache_rsm.cc
-endif
 lock_tester : $(patsubst %.cc,%.o,$(lock_tester)) rpc/$(RPCLIB)
 
 lock_server=lock_server.cc lock_smain.cc
-# ifeq ($(LAB6GE),1)
-#   lock_server+= $(rsm_files)
-# endif
-ifeq ($(LAB7GE),1)
-  lock_server+= lock_server_cache_rsm.cc
-endif
 
 lock_server : $(patsubst %.cc,%.o,$(lock_server)) rpc/$(RPCLIB)
 
 lab1_tester=lab1_tester.cc extent_client.cc extent_server.cc inode_manager.cc disk.cc
 lab1_tester : $(patsubst %.cc,%.o,$(lab1_tester))
+
+test_lab_7=yfs_client.cc extent_client.cc test_lab_7.cc  extent_server.cc inode_manager.cc disk.cc
+
 yfs_client=yfs_client.cc extent_client.cc fuse.cc extent_server.cc inode_manager.cc disk.cc
 ifeq ($(LAB3GE),1)
   yfs_client += lock_client.cc
+  test_lab_7 += lock_client.cc
 endif
-ifeq ($(LAB7GE),1)
-  yfs_client += rsm_client.cc lock_client_cache_rsm.cc
-endif
+
 yfs_client : $(patsubst %.cc,%.o,$(yfs_client)) rpc/$(RPCLIB)
+
+test_lab_7 : $(patsubst %.cc,%.o,$(test_lab_7)) rpc/$(RPCLIB)
+
+
 
 extent_server=extent_server.cc extent_smain.cc inode_manager.cc disk.cc
 extent_server : $(patsubst %.cc,%.o,$(extent_server)) rpc/$(RPCLIB)
@@ -119,7 +120,7 @@ fuse.o: fuse.cc
 -include *.d
 -include rpc/*.d
 
-clean_files=rpc/rpctest rpc/*.o rpc/*.d *.o *.d yfs_client extent_server lock_server lock_tester lock_demo rpctest test-lab-3-a test-lab-3-b test-lab-3-c test-lab-4-a test-lab-4-b test-lab-5 test-lab-6 rsm_tester lab1_tester
+clean_files=rpc/rpctest rpc/*.o rpc/*.d *.o *.d yfs_client extent_server lock_server lock_tester lock_demo rpctest test-lab-3-a test-lab-3-b test-lab-3-c test-lab-4-a test-lab-4-b test-lab-5 rsm_tester lab1_tester test_lab_7
 .PHONY: clean handin
 clean: 
 	rm $(clean_files) -rf 
@@ -129,5 +130,5 @@ handin_file=lab$(LAB).tgz
 labdir=$(shell basename $(PWD))
 handin: 
 	@bash -c "cd ../; tar -X <(tr ' ' '\n' < <(echo '$(handin_ignore)')) -czvf $(handin_file) $(labdir); mv $(handin_file) $(labdir); cd $(labdir)"
-	@echo Please modify lab6.tgz to lab6_[your student id].tgz and upload it to ftp.
+	@echo Please modify lab5.tgz to lab5_[your student id].tgz and upload it to ftp.
 	@echo Thanks!
