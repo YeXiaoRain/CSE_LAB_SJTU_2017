@@ -76,6 +76,8 @@ This command means we want to run a container from the image `ddnirvana/cselab_e
 
 > sudo docker run -it --rm --privileged  --cap-add=ALL -v /home/cselabs/:/home/devlop ddnirvana/cselab_env:latest /bin/bash
 
-put the lab1's codes in container `/home/devlop`
+Put the lab1's codes in container `/home/devlop`
+
+Here, `--privileged  --cap-add=ALL` will give the container ability to use fuse and do other privilege operations.
 
 ### lab3
