@@ -68,3 +68,14 @@ After the `docker pull ` success, you can see the image has been downloaded in y
 This command means we want to run a container from the image `ddnirvana/cselab_env:latest`. `-it` means attach the container's terminal to current terminal. `--rm`  means remove the container when you exit it. ` -v /home/dd/courses/cse/lab_hostdir:/home/devlop` means mount the host dir `/home/dd/courses/cse/lab_hostdir` to the container's dir `/home/devlop`. 
 
 **Notes**: everything in a docker container will be cleaned after you exit a container, so you need to store every usefull files in a mountted volume, in the above example, only files in `/home/devlop` in container will be persistent and every modification in these files will be persistent.
+
+
+## CSE lab containerization
+
+### lab1 & lab2
+
+> sudo docker run -it --rm --privileged  --cap-add=ALL -v /home/cselabs/:/home/devlop ddnirvana/cselab_env:latest /bin/bash
+
+put the lab1's codes in container `/home/devlop`
+
+### lab3
