@@ -57,6 +57,51 @@ here， `ddnirvana/sharekernel_env` is the name of the image, `:latest` is the t
 
 After the `docker pull ` success, you can see the image has been downloaded in your local machine by `docker images`  command
 
+### Run a exitted Container
+
+If you run a container without `--rm`　options, actually you can re-enter the exitted container.
+
+type
+> docker ps -a
+
+and you will see some results like    
+> CONTAINER ID        IMAGE                         COMMAND             CREATED             STATUS                     PORTS               NAMES   
+8bec16084d97        test_commit:v1.0              "/bin/bash"         4 minutes ago       Exited (0) 4 minutes ago                       quirky_goldberg
+
+here, the `8bec16084d97` is your previous running container's id.
+
+To re-enter this container, you should first start it, by
+> docker start 8bec16084d97
+
+replace `8bec16084d97` to `your container's id`
+
+and then, attach a terminal to the container, by
+> docker attach 8bec16084d97
+
+replace `8bec16084d97` to `your container's id` too
+
+Now, you will find you have re-enter the container and every things you have done are still here.
+
+### Commit a container to a image
+
+You can commit a container to a image anytime. 
+
+First, get the container id by
+> docker ps -a
+
+and you will see some results like    
+> CONTAINER ID        IMAGE                         COMMAND             CREATED             STATUS                     PORTS               NAMES   
+8bec16084d97        test_commit:v1.0              "/bin/bash"         4 minutes ago       Exited (0) 4 minutes ago                       quirky_goldberg
+
+and then, commit a container to a image using the container's id   
+>docker commit 8bec16084d97 test_commit:v1.0
+
+here, `8bec16084d97` should be replaced by your container's id, and `test_commit` is the image name you want to give to your image, and `v1.0`　is the tag name you want to give to your image.
+
+After that, you can see your new saved image by
+> docker images
+
+
 ### Run CSELAB_ENV image
 
 1 . create a dir in the host machine, for example
