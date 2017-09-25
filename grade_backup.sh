@@ -10,7 +10,7 @@ score=0
 mkdir yfs1 >/dev/null 2>&1
 mkdir yfs2 >/dev/null 2>&1
 
-./start_client.sh
+./start.sh
 
 test_if_has_mount(){
 	mount | grep -q "yfs_client"
@@ -20,10 +20,17 @@ test_if_has_mount(){
 			exit
 	fi;
 	yfs_count=$(ps -e | grep -o "yfs_client" | wc -l)
-
+	extent_count=$(ps -e | grep -o "extent_server" | wc -l)
+	
 	if [ $yfs_count -ne 2 ];
 	then
 			echo "error: yfs_client not found (expecting 2)"
+			exit
+	fi;
+
+	if [ $extent_count -ne 1 ];
+	then
+			echo "error: extent_server not found"
 			exit
 	fi;
 }
@@ -61,7 +68,7 @@ then
         echo "Failed test-B"
         #exit
 else
-
+	
 	ps -e | grep -q "yfs_client"
 	if [ $? -ne 0 ];
 	then
@@ -205,7 +212,7 @@ lab3
 # finally reaches here!
 #echo "Passed all tests!"
 
-./stop_client.sh
+./stop.sh
 echo ""
 if [ $score -eq 120 ];
 then
