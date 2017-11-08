@@ -51,7 +51,7 @@ $options{s} = 1
 if ($options{c})
 {
 		my $pid = qx`pidof yfs_client`;
-		kill 'SIGINT', $pid;
+        kill 'SIGINT', $pid;
 		exit(0);
 }
 	
@@ -59,14 +59,14 @@ if ($options{c})
 if ($options{p})
 {
 		my $pid = qx`pidof yfs_client`;
-		kill 'SIGUSR1', $pid;
+        kill 'SIGUSR1', $pid;
 		exit(0);
 }
 
 if ($options{n})
 {
 		my $pid = qx`pidof yfs_client`;
-		kill 'SIGUSR2', $pid;
+        kill 'SIGUSR2', $pid;
 		exit(0);
 }
 
