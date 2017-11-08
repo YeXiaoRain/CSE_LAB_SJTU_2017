@@ -1,5 +1,30 @@
 #include "inode_manager.h"
 
+// disk layer -----------------------------------------
+
+disk::disk()
+{
+  bzero(blocks, sizeof(blocks));
+}
+
+void
+disk::read_block(blockid_t id, char *buf)
+{
+  if (id < 0 || id >= BLOCK_NUM || buf == NULL)
+    return;
+
+  memcpy(buf, blocks[id], BLOCK_SIZE);
+}
+
+void
+disk::write_block(blockid_t id, const char *buf)
+{
+  if (id < 0 || id >= BLOCK_NUM || buf == NULL)
+    return;
+
+  memcpy(blocks[id], buf, BLOCK_SIZE); 
+}
+
 // block layer -----------------------------------------
 
 // Allocate a free disk block.

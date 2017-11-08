@@ -79,12 +79,12 @@ lock_server=lock_server.cc lock_smain.cc
 
 lock_server : $(patsubst %.cc,%.o,$(lock_server)) rpc/$(RPCLIB)
 
-lab1_tester=lab1_tester.cc extent_client.cc extent_server.cc inode_manager.cc disk.cc
+lab1_tester=lab1_tester.cc extent_client.cc extent_server.cc inode_manager.cc #disk.cc
 lab1_tester : $(patsubst %.cc,%.o,$(lab1_tester))
 
-test_lab_7=yfs_client.cc extent_client.cc test_lab_7.cc  extent_server.cc inode_manager.cc disk.cc
+test_lab_7=yfs_client.cc extent_client.cc test_lab_7.cc  extent_server.cc inode_manager.cc #disk.cc
 
-yfs_client=yfs_client.cc extent_client.cc fuse.cc extent_server.cc inode_manager.cc disk.cc
+yfs_client=yfs_client.cc extent_client.cc fuse.cc extent_server.cc inode_manager.cc #disk.cc
 ifeq ($(LAB3GE),1)
   yfs_client += lock_client.cc
   test_lab_7 += lock_client.cc
@@ -96,7 +96,7 @@ test_lab_7 : $(patsubst %.cc,%.o,$(test_lab_7)) rpc/$(RPCLIB)
 
 
 
-extent_server=extent_server.cc extent_smain.cc inode_manager.cc disk.cc
+extent_server=extent_server.cc extent_smain.cc inode_manager.cc #disk.cc
 extent_server : $(patsubst %.cc,%.o,$(extent_server)) rpc/$(RPCLIB)
 
 test-lab-3-b=test-lab-3-b.c
