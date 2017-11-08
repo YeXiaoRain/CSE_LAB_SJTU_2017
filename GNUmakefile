@@ -1,4 +1,4 @@
-LAB=7
+LAB=5
 SOL=0
 RPC=./rpc
 LAB1GE=$(shell expr $(LAB) \>\= 1)
@@ -37,9 +37,9 @@ ifeq ($(LAB1GE),1)
   endif
 endif
 
-ifeq ($(LAB6GE),1)
-	LDLIBS += -lssl -lcrypto
-endif
+#ifeq ($(LAB6GE),1)
+#	LDLIBS += -lssl -lcrypto
+#endif
 
 LDLIBS += $(shell test -f `gcc -print-file-name=librt.so` && echo -lrt)
 LDLIBS += $(shell test -f `gcc -print-file-name=libdl.so` && echo -ldl)
