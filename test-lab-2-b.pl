@@ -23,12 +23,11 @@
 use strict;
 $| = 1;
 
-if($#ARGV != 1){
-    print STDERR "Usage: test-lab-2-b.pl directory1 directory2\n";
+if($#ARGV != 0){
+    print STDERR "Usage: test-lab-2-b.pl directory1\n";
     exit(1);
 }
 my $dir1 = $ARGV[0];
-my $dir2 = $ARGV[1];
 
 my $f1 = "a$$";
 my $f2 = "b$$";
@@ -74,15 +73,6 @@ print "OK\n";
 
 print "Check directory listing: ";
 dircheck($dir1);
-print "OK\n";
-
-print "Read files via second server: ";
-checkcontent($dir2, $f1);
-checkcontent($dir2, $f2);
-print "OK\n";
-
-print "Check directory listing on second server: ";
-dircheck($dir2);
 print "OK\n";
 
 print "Passed all tests\n";

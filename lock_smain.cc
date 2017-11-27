@@ -1,6 +1,7 @@
 #include "rpc.h"
 #include <arpa/inet.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <stdio.h>
 #include "lock_server_cache.h"
 #include "paxos.h"
@@ -39,7 +40,6 @@ main(int argc, char *argv[])
 #ifdef RSM
    rsm rsm(argv[1], argv[2]);
 #endif // RSM
-
 
   while(1)
     sleep(1000);

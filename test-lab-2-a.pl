@@ -39,7 +39,7 @@ printf "Passed all tests!\n";
 exit(0);
 
 sub createone {
-    my $name = "file-";
+    my $name = "file -\n-\t-";
     for(my $i = 0; $i < 40; $i++){
 	$name .= sprintf("%c", ord('a') + int(rand(26)));
     }
