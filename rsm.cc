@@ -197,7 +197,6 @@ rsm::sync_with_backups()
   pthread_mutex_lock(&rsm_mutex);
   // Start accepting synchronization request (statetransferreq) now!
   insync = true;
-  // You fill this in for Lab 7
   // Wait until
   //   - all backups in view vid_insync are synchronized
   //   - or there is a committed viewchange
@@ -211,7 +210,6 @@ rsm::sync_with_primary()
 {
   // Remember the primary of vid_insync
   std::string m = primary;
-  // You fill this in for Lab 7
   // Keep synchronizing with primary until the synchronization succeeds,
   // or there is a commited viewchange
   return true;
@@ -225,13 +223,11 @@ rsm::sync_with_primary()
 bool
 rsm::statetransfer(std::string m)
 {
-  // Code will be provided in Lab 7
   return true;
 }
 
 bool
 rsm::statetransferdone(std::string m) {
-  // You fill this in for Lab 7
   // - Inform primary that this slave has synchronized for vid_insync
   return true;
 }
@@ -301,7 +297,6 @@ rsm_client_protocol::status
 rsm::client_invoke(int procno, std::string req, std::string &r)
 {
   int ret = rsm_client_protocol::OK;
-  // You fill this in for Lab 7
   return ret;
 }
 
@@ -316,7 +311,6 @@ rsm_protocol::status
 rsm::invoke(int proc, viewstamp vs, std::string req, int &dummy)
 {
   rsm_protocol::status ret = rsm_protocol::OK;
-  // You fill this in for Lab 7
   return ret;
 }
 
@@ -329,7 +323,6 @@ rsm_protocol::transferres &r)
 {
   ScopedLock ml(&rsm_mutex);
   int ret = rsm_protocol::OK;
-  // Code will be provided in Lab 7
   return ret;
 }
 
@@ -342,14 +335,12 @@ rsm::transferdonereq(std::string m, unsigned vid, int &)
 {
   int ret = rsm_protocol::OK;
   ScopedLock ml(&rsm_mutex);
-  // You fill this in for Lab 7
   // - Return BUSY if I am not insync, or if the slave is not synchronizing
   //   for the same view with me
   // - Remove the slave from the list of unsynchronized backups
   // - Wake up recovery thread if all backups are synchronized
   return ret;
 }
-
 // a node that wants to join an RSM as a server sends a
 // joinreq to the RSM's current primary; this is the
 // handler for that RPC.
