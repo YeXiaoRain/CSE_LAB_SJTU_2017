@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
-#include "lock_server_cache.h"
 #include "paxos.h"
 #include "rsm.h"
 
