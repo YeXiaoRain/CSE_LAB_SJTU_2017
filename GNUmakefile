@@ -1,4 +1,4 @@
-LAB=5
+LAB=7
 SOL=0
 RPC=./rpc
 LAB1GE=$(shell expr $(LAB) \>\= 1)
@@ -8,6 +8,7 @@ LAB4GE=$(shell expr $(LAB) \>\= 4)
 LAB5GE=$(shell expr $(LAB) \>\= 5)
 LAB6GE=$(shell expr $(LAB) \>\= 6)
 LAB7GE=$(shell expr $(LAB) \>\= 7)
+LAB8GE=$(shell expr $(LAB) \>\= 8)
 CXXFLAGS =  -g -MMD -I. -I$(RPC) -DLAB=$(LAB) -DSOL=$(SOL) -D_FILE_OFFSET_BITS=64
 FUSEFLAGS= -D_FILE_OFFSET_BITS=64 -DFUSE_USE_VERSION=25 -I/usr/local/include/fuse -I/usr/include/fuse
 
@@ -37,7 +38,7 @@ ifeq ($(LAB1GE),1)
   endif
 endif
 
-#ifeq ($(LAB6GE),1)
+#ifeq ($(LAB8GE),1)
 #	LDLIBS += -lssl -lcrypto
 #endif
 
@@ -53,7 +54,7 @@ lab3: yfs_client extent_server test-lab-3-g
 lab4: lock_server lock_tester lock_demo yfs_client extent_server test-lab-4-a test-lab-4-b
 lab5: lock_server lock_tester lock_demo yfs_client extent_server test-lab-5
 
-lab7: lock_server lock_tester lock_demo yfs_client extent_server test_lab_7
+lab7: lock_server lock_tester lock_demo yfs_client extent_server test-lab-7
 lab8: lock_tester lock_server rsm_tester
 
 hfiles1=rpc/fifo.h rpc/connection.h rpc/rpc.h rpc/marshall.h rpc/method_thread.h\
@@ -79,12 +80,11 @@ lock_server=lock_server.cc lock_smain.cc
 
 lock_server : $(patsubst %.cc,%.o,$(lock_server)) rpc/$(RPCLIB)
 
-lab1_tester=lab1_tester.cc extent_client.cc extent_server.cc inode_manager.cc #disk.cc
+lab1_tester=lab1_tester.cc extent_client.cc extent_server.cc inode_manager.cc disk.cc
 lab1_tester : $(patsubst %.cc,%.o,$(lab1_tester))
 
-test_lab_7=yfs_client.cc extent_client.cc test_lab_7.cc  extent_server.cc inode_manager.cc #disk.cc
 
-yfs_client=yfs_client.cc extent_client.cc fuse.cc extent_server.cc inode_manager.cc #disk.cc
+yfs_client=yfs_client.cc extent_client.cc fuse.cc extent_server.cc inode_manager.cc disk.cc
 ifeq ($(LAB3GE),1)
   yfs_client += lock_client.cc
   test_lab_7 += lock_client.cc
@@ -96,7 +96,7 @@ test_lab_7 : $(patsubst %.cc,%.o,$(test_lab_7)) rpc/$(RPCLIB)
 
 
 
-extent_server=extent_server.cc extent_smain.cc inode_manager.cc #disk.cc
+extent_server=extent_server.cc extent_smain.cc inode_manager.cc disk.cc
 extent_server : $(patsubst %.cc,%.o,$(extent_server)) rpc/$(RPCLIB)
 
 test-lab-3-b=test-lab-3-b.c
@@ -120,7 +120,7 @@ fuse.o: fuse.cc
 -include *.d
 -include rpc/*.d
 
-clean_files=rpc/rpctest rpc/*.o rpc/*.d *.o *.d yfs_client extent_server lock_server lock_tester lock_demo rpctest test-lab-3-a test-lab-3-b test-lab-3-c test-lab-4-a test-lab-4-b test-lab-5 rsm_tester lab1_tester test_lab_7
+clean_files=rpc/rpctest rpc/*.o rpc/*.d *.o *.d yfs_client extent_server lock_server lock_tester lock_demo rpctest test-lab-3-a test-lab-3-b test-lab-3-c test-lab-4-a test-lab-4-b test-lab-5 rsm_tester lab1_tester test-lab-7
 .PHONY: clean handin
 clean: 
 	rm $(clean_files) -rf 
@@ -130,5 +130,5 @@ handin_file=lab$(LAB).tgz
 labdir=$(shell basename $(PWD))
 handin: 
 	@bash -c "cd ../; tar -X <(tr ' ' '\n' < <(echo '$(handin_ignore)')) -czvf $(handin_file) $(labdir); mv $(handin_file) $(labdir); cd $(labdir)"
-	@echo Please modify lab5.tgz to lab5_[your student id].tgz and upload it to ftp.
+	@echo Please modify lab7.tgz to lab7_[your student id].tgz and upload it to ftp.
 	@echo Thanks!
