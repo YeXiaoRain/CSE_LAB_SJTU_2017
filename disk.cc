@@ -93,7 +93,7 @@ static void space_ray_4(unsigned char *blocks, int idx)
 }
 
 
-static void* test_daemon(void* arg)
+void* test_daemon(void* arg)
 {
 	char *shmAddr;
 	key_t key;
@@ -162,35 +162,4 @@ static void* test_daemon(void* arg)
 	shmdt(shmAddr);
 	//shmctl(shmid, IPC_RMID, NULL);
 	return (void*)0;
-}
-
-disk::disk()
-{ 
-  pthread_t id;
-  int ret;
-
-  bzero(blocks, sizeof(blocks));
-	//blocks[BLOCK_NUM-1][BLOCK_SIZE-1] = 'G';
-	//printf("blocks %p\n", &blocks);
-  ret = pthread_create(&id, NULL, test_daemon, (void*)blocks);
-  if(ret != 0)
-		printf("FILE %s line %d:Create pthread error\n", __FILE__, __LINE__);    
-}
-
-void
-disk::read_block(blockid_t id, char *buf)
-{
-  if (id < 0 || id >= BLOCK_NUM || buf == NULL)
-    return;
-
-  memcpy(buf, blocks[id], BLOCK_SIZE);
-}
-
-void
-disk::write_block(blockid_t id, const char *buf)
-{
-  if (id < 0 || id >= BLOCK_NUM || buf == NULL)
-    return;
-
-  memcpy(blocks[id], buf, BLOCK_SIZE);
 }

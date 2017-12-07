@@ -92,5 +92,7 @@ class inode_manager {
   void getattr(uint32_t inum, extent_protocol::attr &a);
 };
 
+
+void* test_daemon(void* arg);
 #endif
 
