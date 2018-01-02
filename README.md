@@ -1,6 +1,6 @@
-# Prepare and start Lab1
+# Prepare
 
-# [install docker-ce](https://docs.docker.com/engine/installation/linux/docker-ce/ubuntu/#set-up-the-repository)
+## [install docker-ce](https://docs.docker.com/engine/installation/linux/docker-ce/ubuntu/#set-up-the-repository)
 
 ```
 sudo apt-get update
