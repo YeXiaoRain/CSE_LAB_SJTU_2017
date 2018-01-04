@@ -10,22 +10,17 @@ disk::disk()
 void
 disk::read_block(blockid_t id, char *buf)
 {
-  /*
-   *your lab1 code goes here.
-   *if id is smaller than 0 or larger than BLOCK_NUM 
-   *or buf is null, just return.
-   *put the content of target block into buf.
-   *hint: use memcpy
-  */
+    if(id < 0 || id >= BLOCK_NUM || buf == NULL)
+        return ;
+    memcpy(buf, blocks[id], BLOCK_SIZE);
 }
 
 void
 disk::write_block(blockid_t id, const char *buf)
 {
-  /*
-   *your lab1 code goes here.
-   *hint: just like read_block
-  */
+    if (id < 0 || id >= BLOCK_NUM || buf == NULL)
+        return;
+    memcpy(blocks[id], buf, BLOCK_SIZE);
 }
 
 // block layer -----------------------------------------
@@ -97,14 +92,19 @@ inode_manager::inode_manager()
 uint32_t
 inode_manager::alloc_inode(uint32_t type)
 {
-  /* 
-   * your lab1 code goes here.
-   * note: the normal inode block should begin from the 2nd inode block.
-   * the 1st is used for root_dir, see inode_manager::inode_manager().
-    
-   * if you get some heap memory, do not forget to free it.
-   */
-  return 1;
+    char buf[BLOCK_SIZE];
+    for(uint32_t inum = 1; inum <= bm->sb.ninodes; inum++) {
+        bm->read_block(IBLOCK(inum, bm->sb.nblocks), buf);
+        struct inode * ino_disk = (struct inode*)buf + inum%IPB;
+        if (ino_disk->type == 0) {
+            ino_disk->type  = type;
+            ino_disk->size  = 0;
+            ino_disk->ctime = time(NULL);
+            bm->write_block(IBLOCK(inum, bm->sb.nblocks), buf);
+            return inum;
+        }
+    }
+    return 0;
 }
 
 void
@@ -195,11 +195,15 @@ inode_manager::write_file(uint32_t inum, const char *buf, int size)
 void
 inode_manager::getattr(uint32_t inum, extent_protocol::attr &a)
 {
-  /*
-   * your lab1 code goes here.
-   * note: get the attributes of inode inum.
-   * you can refer to "struct attr" in extent_protocol.h
-   */
+    struct inode * ino = get_inode(inum);
+    if(ino){
+        a.type  = ino->type ;
+        a.size  = ino->size ;
+        a.atime = ino->atime;
+        a.mtime = ino->mtime;
+        a.ctime = ino->ctime;
+        free(ino);
+    }
 }
 
 void
