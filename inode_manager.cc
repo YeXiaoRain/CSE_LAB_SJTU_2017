@@ -114,12 +114,11 @@ inode_manager::alloc_inode(uint32_t type)
 void
 inode_manager::free_inode(uint32_t inum)
 {
-  /* 
-   * your lab1 code goes here.
-   * note: you need to check if the inode is already a freed one;
-   * if not, clear it, and remember to write back to disk.
-   * do not forget to free memory if necessary.
-   */
+    struct inode * ino = get_inode(inum);
+    if(!ino)
+        return ;
+    ino->type = 0;
+    put_inode(inum,ino);
 }
 
 
@@ -280,9 +279,6 @@ inode_manager::getattr(uint32_t inum, extent_protocol::attr &a)
 void
 inode_manager::remove_file(uint32_t inum)
 {
-  /*
-   * your lab1 code goes here
-   * note: you need to consider about both the data block and inode of the file
-   * do not forget to free memory if necessary.
-   */
+    write_file(inum, NULL, 0);
+    free_inode(inum);
 }
