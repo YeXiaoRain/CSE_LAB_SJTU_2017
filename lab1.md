@@ -298,6 +298,7 @@ After you finish these 2 functions implementation, run:
     % ./lab1_tester
 
 You should get following output:
+
     ========== begin test create and getattr ==========
     …
     …
