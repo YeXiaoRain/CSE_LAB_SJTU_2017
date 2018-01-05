@@ -48,31 +48,94 @@ You should get following output:
     [TEST_ERROR] : error …
     --------------------------------------------------
     Final score is : 40
-      
 
+---
 
+通过阅读代码`inode_manager.h`先知道整个结构 为`inode_manager`->`block_manager`->`disk`其中disk用的是数组模拟
 
+其中注意的是 disk的分化要按照
+` inode_manager.c:// |<-sb->|<-free block bitmap->|<-inode table->|<-data->|`
 
+Part1 的任务 是
+    disk:
+    void read_block(uint32_t id, char *buf);
+    void write_block(uint32_t id, const char *buf);
+    inode_manager:
+    int32_t alloc_inode(uint32_t type);
+    oid getattr(uint32_t inum, extent_protocol::attr &a);
 
+disk的两个函数跟着注释实现即可
 
+```c++
+void
+disk::read_block(blockid_t id, char *buf)
+{
+    if(id < 0 || id >= BLOCK_NUM || buf == NULL)
+        return ;
+    memcpy(buf, blocks[id], BLOCK_SIZE);
+}
 
+void
+disk::write_block(blockid_t id, const char *buf)
+{
+    if (id < 0 || id >= BLOCK_NUM || buf == NULL)
+        return;
+    memcpy(blocks[id], buf, BLOCK_SIZE);
+}
+```
 
+`alloc_inode`参考下面的`get_inode`的实现,其中要注意的是 一个`BLOCK_SIZE`里面存的是IPB个inode,所以tcbbd的代码实现是半错不错的XD。 其次 虽然不算错，但是个人建议 两处使用`bm->`而不是宏里面的`INODE_` 这里稍微表现一下 层级关系
 
+```
+uint32_t
+inode_manager::alloc_inode(uint32_t type)
+{
+    char buf[BLOCK_SIZE];
+    for(uint32_t inum = 1; inum <= bm->sb.ninodes; inum++) {
+        bm->read_block(IBLOCK(inum, bm->sb.nblocks), buf);
+        struct inode * ino_disk = (struct inode*)buf + inum%IPB;
+        if (ino_disk->type == 0) {
+            ino_disk->type = type;
+            ino_disk->size  = 0;
+            ino_disk->ctime = time(NULL);
+            bm->write_block(IBLOCK(inum, bm->sb.nblocks), buf);
+            return inum;
+        }
+    }
+    return 0;
+}
+```
 
+然后是GETATTR 很直接,要注意的是 阅读一下`get_inode`的代码 其中返回的是malloc 出来的 所以请free掉
 
+```
+inode_manager::getattr(uint32_t inum, extent_protocol::attr &a)
+{
+    struct inode * ino = get_inode(inum);
+    if(ino){
+        a.type  = ino->type ;
+        a.size  = ino->size ;
+        a.atime = ino->atime;
+        a.mtime = ino->mtime;
+        a.ctime = ino->ctime;
+        free(ino);
+    }
+}
+```
 
+至此part 1 完成40分到手
 
+# Part 2 PUT/GET
 
+implement
 
+`void inode_manager::read_file(uint32_t inum, char **buf_out, int *size)`
 
+`void inode_manager::write_file(uint32_t inum, const char *buf, int size)`
 
+`blockid_t block_manager::alloc_block()`
 
-
-
-
-
-Part 2: PUT/GET
-Your job in Part 2 is to implement the write_file and read_file of inode_manager, and alloc_block and free_block of block_manager, to support the PUT and GET APIs of extent_server.
+`void block_manager::free_block(uint32_t id)`
 
 You should pay attention to the indirect block test. In our inode manager, each file has only one additional level of indirect block, which means one file has 32 direct block and 1 indirect block which point to a block filled with other blocks id.
 
@@ -80,31 +143,159 @@ After you finish these 4 functions implementation, run:
 
     % make
     % ./lab1_tester
-  
+
 You should get following output:
-    ========== begin test create and getattr ==========
-    …
-    …
+
     ========== pass test create and getattr ==========
-    ========== begin test put and get ==========
-    …
     …
     ========== pass test put and get ==========
-    ========== begin test remove ==========
     …
-    ...
-    [TEST_ERROR] : error …
-    --------------------------------------------------
     Final score is : 80
-  
-Part 3: REMOVE
-Our job in Part 3 is to implement the remove_file and free_inode of inode_manager, to support the REMOVE API of extent_server.
+
+根据注释中 说的 判断一下是否有indirect的块 即可
+
+```
+/* Get all the data of a file by inum.�
+ * Return alloced data, should be freed by caller. */
+void
+inode_manager::read_file(uint32_t inum, char **buf_out, int *size)
+{
+    char buf[BLOCK_SIZE];
+    inode_t * ino = get_inode(inum);
+    if( !ino ){
+        *size = 0;
+        *buf_out = (char *)malloc(0);
+        return ;
+    }
+    unsigned int offset = 0;
+    char * ret = (char *)malloc(ino->size);
+
+    for (int i = 0; i < NDIRECT && offset < ino->size; i++) {
+        int len = MIN(ino->size - offset , BLOCK_SIZE);
+        bm->read_block(ino->blocks[i], buf);
+        memcpy(ret + offset, buf, len);
+        offset += len;
+    }
+
+    if (offset < ino->size) {
+        char indirect[BLOCK_SIZE];
+        bm->read_block(ino->blocks[NDIRECT], indirect);
+        for (unsigned int i = 0; i < NINDIRECT && offset < ino->size; i++) {
+            blockid_t id = *((blockid_t *)indirect + i);
+            int len = MIN(ino->size - offset , BLOCK_SIZE);
+            bm->read_block(id, buf);
+            memcpy(ret + offset, buf, len);
+            offset += len;
+        }
+    }
+    *size = offset;
+    *buf_out = ret;
+    ino->atime = ino->ctime = time(NULL);
+    put_inode(inum, ino);
+    free(ino);
+}
+```
+
+写块这里我做得暴力一点，直接把原来的全删除了 再重新建立。XD,需要注意的是 如果有indirect不止要删除，其中指向的数据block，同时也要删除，indirect block
+
+```
+/* alloc/free blocks if needed */
+void
+inode_manager::write_file(uint32_t inum, const char *buf, int size)
+{
+    inode_t * ino = get_inode(inum);
+    if(!ino)
+        return ;
+    unsigned int offset = 0;
+    // free
+    for (int i = 0; i < NDIRECT && offset < ino->size; i++) {
+        bm->free_block(ino->blocks[i]);
+        offset += BLOCK_SIZE;
+    }
+    if (offset < ino->size) {
+        char indirect[BLOCK_SIZE];
+        bm->read_block(ino->blocks[NDIRECT], indirect);
+        for (unsigned int i = 0; i < NINDIRECT && offset < ino->size; i++) {
+            blockid_t id = *((blockid_t *)indirect + i);
+            bm->free_block(id);
+            offset += BLOCK_SIZE;
+        }
+        bm->free_block(ino->blocks[NDIRECT]);
+    }
+    // new
+    char writebuf[BLOCK_SIZE];
+    offset = 0;
+    ino->size = size;
+    for (int i = 0; i < NDIRECT && offset < ino->size; i++) {
+        int len = MIN(ino->size - offset , BLOCK_SIZE);
+        ino->blocks[i] = bm->alloc_block();
+        memcpy(writebuf,buf + offset,len);
+        bm->write_block(ino->blocks[i],writebuf);
+        offset += len;
+    }
+    if (offset < ino->size) {
+        ino->blocks[NDIRECT] = bm->alloc_block();
+        char indirect[BLOCK_SIZE];
+        for (unsigned int i = 0; i < NINDIRECT && offset < ino->size; i++) {
+            blockid_t * id = (blockid_t *)indirect + i;
+            *id = bm->alloc_block();
+            int len = MIN(ino->size - offset , BLOCK_SIZE);
+            memcpy(writebuf,buf + offset,len);
+            bm->write_block(*id,writebuf);
+            offset += len;
+        }
+        bm->write_block(ino->blocks[NDIRECT], indirect);
+    }
+    ino->atime = ino->ctime = ino->mtime = time(NULL);
+    put_inode(inum,ino);
+    free(ino);
+}
+```
+
+回头看一下 磁盘划分，也就是从 inode部分以后才是可以使用的,而inode及前面的部分 不需要bitmap标记,是通过相对偏移和宏来进行使用，
+
+```c++
+// Allocate a free disk block.
+blockid_t
+block_manager::alloc_block()
+{
+    char buf[BLOCK_SIZE];
+    for (blockid_t id = IBLOCK(sb.ninodes,sb.nblocks) + 1; id < sb.nblocks; id++) {
+        unsigned int offset = id % BPB;
+        d->read_block(BBLOCK(id), buf);
+        if (!(buf[offset/8] & (1 << (offset % 8)))) {
+            buf[offset/8] |= 1 << (offset % 8);
+            write_block(BBLOCK(id), buf);
+            return id;
+        }
+    }
+    return 0;
+}
+
+void
+block_manager::free_block(uint32_t id)
+{
+    char buf[BLOCK_SIZE];
+    if (id <= IBLOCK(sb.ninodes,sb.nblocks) || id >= sb.nblocks)
+        return;
+    uint32_t offset = id % BPB;
+    read_block(BBLOCK(id), buf);
+    buf[offset/8] &= ~(1 << (offset % 8));
+    write_block(BBLOCK(id), buf);
+}
+```
+
+至此80分到手
+
+# Part 3 REMOVE
+
+implement `inode_manager:` `remove_file` and `free_inode` to support the REMOVE API of `extent_server`.
 
 After you finish these 2 functions implementation, run:
 
     % make
     % ./lab1_tester
-  
+
 You should get following output:
     ========== begin test create and getattr ==========
     …
@@ -120,17 +311,40 @@ You should get following output:
     ========== pass test remove ==========
     --------------------------------------------------
     Final score is : 100
-  
+
 Handin Procedure
 After all above done:
 
     % cd /path_to_cselab/lab1
     % make handin
-  
-That should produce a file called lab1.tgz in your lab1/ directory. Change the file name to your student id:
-    % mv lab.tgz [your student id]-lab1.tgz
-  
-Then upload [your student id]-lab1.tgz file to ftp://Dd_nirvana:public@public.sjtu.edu.cn/upload/cse/lab1/ before the deadline. You are only given the permission to list and create new file, but no overwrite and read. So make sure your implementation has passed all the tests before final submit. (If you must re-submit a new version, add explicit version number such as "V2" to indicate).
-You will receive full credit if your software passes the same tests we gave you when we run your software on our machines.
 
-Please take your time examining this lab and the overall architecture of yfs. There are more interesting challenges ahead waiting for you.
+正好前面的是 简洁 暴力的实现 在这里反而让代码变简单了
+```
+void
+inode_manager::free_inode(uint32_t inum)
+{
+    struct inode * ino = get_inode(inum);
+    if(!ino)
+        return ;
+    ino->type = 0;
+    put_inode(inum,ino);
+}
+```
+
+```
+void
+inode_manager::remove_file(uint32_t inum)
+{
+    write_file(inum, NULL, 0);
+    free_inode(inum);
+}
+```
+
+
+
+# 结束
+
+整个lab的测试过程和之前靠 grep输出的不同，所以 在代码中 也可以根据自己喜好添加一些printf
+
+在编码过程中 可以多加一些assert 方便调试
+
