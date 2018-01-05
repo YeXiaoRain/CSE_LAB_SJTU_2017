@@ -29,25 +29,29 @@ disk::write_block(blockid_t id, const char *buf)
 blockid_t
 block_manager::alloc_block()
 {
-  /*
-   * your lab1 code goes here.
-   * note: you should mark the corresponding bit in block bitmap when alloc.
-   * you need to think about which block you can start to be allocated.
-
-   *hint: use macro IBLOCK and BBLOCK.
-          use bit operation.
-          remind yourself of the layout of disk.
-   */
-  return 0;
+    char buf[BLOCK_SIZE];
+    for (blockid_t id = IBLOCK(sb.ninodes,sb.nblocks) + 1; id < sb.nblocks; id++) {
+        unsigned int offset = id % BPB;
+        d->read_block(BBLOCK(id), buf);
+        if (!(buf[offset/8] & (1 << (offset % 8)))) {
+            buf[offset/8] |= 1 << (offset % 8);
+            write_block(BBLOCK(id), buf);
+            return id;
+        }
+    }
+    return 0;
 }
 
 void
 block_manager::free_block(uint32_t id)
 {
-  /* 
-   * your lab1 code goes here.
-   * note: you should unmark the corresponding bit in the block bitmap when free.
-   */
+    char buf[BLOCK_SIZE];
+    if (id <= IBLOCK(sb.ninodes,sb.nblocks) || id >= sb.nblocks)
+        return;
+    uint32_t offset = id % BPB;
+    read_block(BBLOCK(id), buf);
+    buf[offset/8] &= ~(1 << (offset % 8));
+    write_block(BBLOCK(id), buf);
 }
 
 // The layout of disk should be like this:
@@ -172,24 +176,91 @@ inode_manager::put_inode(uint32_t inum, struct inode *ino)
 void
 inode_manager::read_file(uint32_t inum, char **buf_out, int *size)
 {
-  /*
-   * your lab1 code goes here.
-   * note: read blocks related to inode number inum,
-   * and copy them to buf_out
-   */
+    char buf[BLOCK_SIZE];
+    inode_t * ino = get_inode(inum);
+    if( !ino ){
+        *size = 0;
+        *buf_out = (char *)malloc(0);
+        return ;
+    }
+    unsigned int offset = 0;
+    char * ret = (char *)malloc(ino->size);
+
+    for (int i = 0; i < NDIRECT && offset < ino->size; i++) {
+        int len = MIN(ino->size - offset , BLOCK_SIZE);
+        bm->read_block(ino->blocks[i], buf);
+        memcpy(ret + offset, buf, len);
+        offset += len;
+    }
+
+    if (offset < ino->size) {
+        char indirect[BLOCK_SIZE];
+        bm->read_block(ino->blocks[NDIRECT], indirect);
+        for (unsigned int i = 0; i < NINDIRECT && offset < ino->size; i++) {
+            blockid_t id = *((blockid_t *)indirect + i);
+            int len = MIN(ino->size - offset , BLOCK_SIZE);
+            bm->read_block(id, buf);
+            memcpy(ret + offset, buf, len);
+            offset += len;
+        }
+    }
+    *size = offset;
+    *buf_out = ret;
+    ino->atime = ino->ctime = time(NULL);
+    put_inode(inum, ino);
+    free(ino);
 }
 
 /* alloc/free blocks if needed */
 void
 inode_manager::write_file(uint32_t inum, const char *buf, int size)
 {
-  /*
-   * your lab1 code goes here.
-   * note: write buf to blocks of inode inum.
-   * you need to consider the situation when the size of buf 
-   * is larger or smaller than the size of original inode.
-   * you should free some blocks if necessary.
-   */
+    inode_t * ino = get_inode(inum);
+    if(!ino)
+        return ;
+    unsigned int offset = 0;
+    // free
+    for (int i = 0; i < NDIRECT && offset < ino->size; i++) {
+        bm->free_block(ino->blocks[i]);
+        offset += BLOCK_SIZE;
+    }
+    if (offset < ino->size) {
+        char indirect[BLOCK_SIZE];
+        bm->read_block(ino->blocks[NDIRECT], indirect);
+        for (unsigned int i = 0; i < NINDIRECT && offset < ino->size; i++) {
+            blockid_t id = *((blockid_t *)indirect + i);
+            bm->free_block(id);
+            offset += BLOCK_SIZE;
+        }
+        bm->free_block(ino->blocks[NDIRECT]);
+    }
+    // new
+    char writebuf[BLOCK_SIZE];
+    offset = 0;
+    ino->size = size;
+    for (int i = 0; i < NDIRECT && offset < ino->size; i++) {
+        int len = MIN(ino->size - offset , BLOCK_SIZE);
+        ino->blocks[i] = bm->alloc_block();
+        memcpy(writebuf,buf + offset,len);
+        bm->write_block(ino->blocks[i],writebuf);
+        offset += len;
+    }
+    if (offset < ino->size) {
+        ino->blocks[NDIRECT] = bm->alloc_block();
+        char indirect[BLOCK_SIZE];
+        for (unsigned int i = 0; i < NINDIRECT && offset < ino->size; i++) {
+            blockid_t * id = (blockid_t *)indirect + i;
+            *id = bm->alloc_block();
+            int len = MIN(ino->size - offset , BLOCK_SIZE);
+            memcpy(writebuf,buf + offset,len);
+            bm->write_block(*id,writebuf);
+            offset += len;
+        }
+        bm->write_block(ino->blocks[NDIRECT], indirect);
+    }
+    ino->atime = ino->ctime = ino->mtime = time(NULL);
+    put_inode(inum,ino);
+    free(ino);
 }
 
 void
