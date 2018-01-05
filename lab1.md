@@ -57,6 +57,7 @@ You should get following output:
 ` inode_manager.c:// |<-sb->|<-free block bitmap->|<-inode table->|<-data->|`
 
 Part1 的任务 是
+
     disk:
     void read_block(uint32_t id, char *buf);
     void write_block(uint32_t id, const char *buf);
@@ -86,7 +87,7 @@ disk::write_block(blockid_t id, const char *buf)
 
 `alloc_inode`参考下面的`get_inode`的实现,其中要注意的是 一个`BLOCK_SIZE`里面存的是IPB个inode,所以tcbbd的代码实现是半错不错的XD。 其次 虽然不算错，但是个人建议 两处使用`bm->`而不是宏里面的`INODE_` 这里稍微表现一下 层级关系
 
-```
+```c++
 uint32_t
 inode_manager::alloc_inode(uint32_t type)
 {
@@ -108,7 +109,7 @@ inode_manager::alloc_inode(uint32_t type)
 
 然后是GETATTR 很直接,要注意的是 阅读一下`get_inode`的代码 其中返回的是malloc 出来的 所以请free掉
 
-```
+```c++
 inode_manager::getattr(uint32_t inum, extent_protocol::attr &a)
 {
     struct inode * ino = get_inode(inum);
@@ -154,7 +155,7 @@ You should get following output:
 
 根据注释中 说的 判断一下是否有indirect的块 即可
 
-```
+```c++
 /* Get all the data of a file by inum.�
  * Return alloced data, should be freed by caller. */
 void
@@ -198,7 +199,7 @@ inode_manager::read_file(uint32_t inum, char **buf_out, int *size)
 
 写块这里我做得暴力一点，直接把原来的全删除了 再重新建立。XD,需要注意的是 如果有indirect不止要删除，其中指向的数据block，同时也要删除，indirect block
 
-```
+```c++
 /* alloc/free blocks if needed */
 void
 inode_manager::write_file(uint32_t inum, const char *buf, int size)
@@ -319,7 +320,8 @@ After all above done:
     % make handin
 
 正好前面的是 简洁 暴力的实现 在这里反而让代码变简单了
-```
+
+```c++
 void
 inode_manager::free_inode(uint32_t inum)
 {
@@ -331,7 +333,7 @@ inode_manager::free_inode(uint32_t inum)
 }
 ```
 
-```
+```c++
 void
 inode_manager::remove_file(uint32_t inum)
 {

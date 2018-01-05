@@ -51,6 +51,9 @@ make
 
 [TODO] 搭一个有vim配置的images 目前个人比较推荐的是`spf13-vim`:`curl https://j.mp/spf13-vim3 -L -o - | sh`
 
+如果你使用`spf13-vim`它有一个自动去多余末尾空格的在`~/.vimrc.before`里把`git config --global alias.vimdiff difftool`的注释"去掉，否则 你的每次会出现很多删除空格的改动XD
+
+
 [TODO] 搜能够不需要privileged
 
 再次访问
