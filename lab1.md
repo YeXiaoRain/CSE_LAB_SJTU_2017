@@ -347,7 +347,7 @@ inode_manager::remove_file(uint32_t inum)
 
 # 结束
 
-整个lab的测试过程和之前靠 grep输出的不同，所以 在代码中 也可以根据自己喜好添加一些printf
+整个lab的测试过程和之前靠 grep输出评分的lab不同，
 
-在编码过程中 可以多加一些assert 方便调试
+在代码中 也可以根据自己喜好添加一些printf,也可以多加一些assert 方便调试
 
