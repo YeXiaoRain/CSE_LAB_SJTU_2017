@@ -197,7 +197,7 @@ inode_manager::read_file(uint32_t inum, char **buf_out, int *size)
 }
 ```
 
-写块这里我做得暴力一点，直接把原来的全删除了 再重新建立。XD,需要注意的是 如果有indirect不止要删除，其中指向的数据block，同时也要删除，indirect block
+写块这里我做得暴力一点，直接把原来的全删除了 再重新建立。XD,需要注意的是 如果有indirect不只要删除其中指向的数据block，同时也要删除用来存间接指向的indirect block,建立时同理
 
 ```c++
 /* alloc/free blocks if needed */
