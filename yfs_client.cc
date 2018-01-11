@@ -137,15 +137,15 @@ yfs_client::setattr(inum ino, size_t size)
 int
 yfs_client::create(inum parent, const char *name, mode_t mode, inum &ino_out)
 {
-    int r = OK;
-
-    /*
-     * your lab2 code goes here.
-     * note: lookup is what you need to check if file exist;
-     * after create file or dir, you must remember to modify the parent infomation.
-     */
-
-    return r;
+  std::string dir_content;
+  if (ec->get(parent, dir_content) != extent_protocol::OK)
+    return IOERR;
+  if (dir_content.find("/" + std::string(name) + "//") != std::string::npos)
+    return EXIST;
+  if (ec->create(extent_protocol::T_FILE, ino_out) != extent_protocol::OK)
+    return IOERR;
+  ec->put(parent, dir_content + "/" + std::string(name) + "//" + filename(ino_out));
+  return OK;
 }
 
 int
@@ -165,29 +165,42 @@ yfs_client::mkdir(inum parent, const char *name, mode_t mode, inum &ino_out)
 int
 yfs_client::lookup(inum parent, const char *name, bool &found, inum &ino_out)
 {
-    int r = OK;
-
-    /*
-     * your lab2 code goes here.
-     * note: lookup file from parent dir according to name;
-     * you should design the format of directory content.
-     */
-
-    return r;
+  found = false;
+  std::string dir_content;
+  if (ec->get(parent, dir_content) != extent_protocol::OK)
+    return IOERR;
+  dir_content+="/";
+  std::string file_name = "/" + std::string(name) + "//";
+  size_t st, end;
+  if((st = dir_content.find(file_name)) != std::string::npos){
+    found = true;
+    st += file_name.size();
+    end = dir_content.find_first_of("/", st);
+    ino_out = n2i(dir_content.substr(st, end-st));
+  }
+  return OK;
 }
 
 int
 yfs_client::readdir(inum dir, std::list<dirent> &list)
 {
-    int r = OK;
+  std::string dir_content;
+  if(ec->get(dir, dir_content) != extent_protocol::OK)
+    return IOERR;
+  dir_content+="/";
+  size_t st = 1, end;
+  while(st != dir_content.size()) {
+    dirent dirent_pair;
+    end = dir_content.find_first_of("//", st);
+    dirent_pair.name = dir_content.substr(st, end - st);
 
-    /*
-     * your lab2 code goes here.
-     * note: you should parse the dirctory content using your defined format,
-     * and push the dirents to the list.
-     */
-
-    return r;
+    st = end + 2;
+    end = dir_content.find_first_of("/", st);
+    dirent_pair.inum = n2i(dir_content.substr(st, end - st));
+    list.push_back(dirent_pair);
+    st = end + 1;
+  }
+  return OK;
 }
 
 int
