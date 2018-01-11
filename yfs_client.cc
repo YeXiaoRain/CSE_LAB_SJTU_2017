@@ -123,15 +123,12 @@ release:
 int
 yfs_client::setattr(inum ino, size_t size)
 {
-    int r = OK;
-
-    /*
-     * your lab2 code goes here.
-     * note: get the content of inode ino, and modify its content
-     * according to the size (<, =, or >) content length.
-     */
-
+  std::string buf;
+  int r;
+  if((r = ec->get(ino, buf)) != extent_protocol::OK)
     return r;
+  buf.resize(size);
+  return ec->put(ino, buf);
 }
 
 int
@@ -206,29 +203,33 @@ yfs_client::readdir(inum dir, std::list<dirent> &list)
 int
 yfs_client::read(inum ino, size_t size, off_t off, std::string &data)
 {
-    int r = OK;
-
-    /*
-     * your lab2 code goes here.
-     * note: read using ec->get().
-     */
-
+  std::string buf;
+  int r;
+  if((r = ec->get(ino, buf))!= extent_protocol::OK)
     return r;
+  if (off < (off_t)buf.size())
+    data = buf.substr(off, size);
+  else
+    data = "";
+  return OK;
 }
 
 int
 yfs_client::write(inum ino, size_t size, off_t off, const char *data,
         size_t &bytes_written)
 {
-    int r = OK;
-
-    /*
-     * your lab2 code goes here.
-     * note: write using ec->put().
-     * when off > length of original file, fill the holes with '\0'.
-     */
-
+  std::string buf;
+  int r;
+  if((r = ec->get(ino, buf)) != extent_protocol::OK)
     return r;
+  if (buf.size() < off + size)
+    buf.resize(off + size);
+  for(unsigned int i=0;i<size;i++)
+    buf[off+i]=data[i];
+  if((r = ec->put(ino, buf)) != extent_protocol::OK)
+    return r;
+  bytes_written = size;
+  return OK;
 }
 
 int yfs_client::unlink(inum parent,const char *name)
