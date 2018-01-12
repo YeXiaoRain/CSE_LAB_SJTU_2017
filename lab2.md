@@ -156,9 +156,11 @@ debug 可以看log，可以看fuse.cc中的代码调用方法
 
 然而通过grep发现mknod 是在fuse.cc中的并不是yfs的，所以这里的任务理解为要支持 fuse的 create/mknod lookup,readdir,通过读fuse.cc的代码，知道需要实现的有
 
- * `int yfs_client::create(inum parent, const char *name, mode_t mode, inum &ino_out)`
- * `int yfs_client::lookup(inum parent, const char *name, bool &found, inum &ino_out)`
- * `int yfs_client::readdir(inum dir, std::list<dirent> &list)`
+```c++
+int yfs_client::create(inum parent, const char *name, mode_t mode, inum &ino_out)
+int yfs_client::lookup(inum parent, const char *name, bool &found, inum &ino_out)
+int yfs_client::readdir(inum dir, std::list<dirent> &list)
+```
 
 我们可以调用的有下层有
 
@@ -216,8 +218,7 @@ yfs_client::lookup(inum parent, const char *name, bool &found, inum &ino_out)
     st += file_name.size();
     end = dir_content.find_first_of("/", st);
     ino_out = n2i(dir_content.substr(st, end-st));
-  }else
-    return IOERR;
+  }
   return OK;
 }
 ```
@@ -313,7 +314,7 @@ read 和write ，具体细节参照`man 2 read`和`man 2 lseek`
 
 实现 SETATTR WRITE READ
 
-通过`test-lab-2-b.pl`的测试【同时part1的测试也不能挂掉，这不是废话吗 外国人的脑回路真奇怪】
+通过`test-lab-2-b.pl`的测试【同时part1的测试也不能挂掉，这不是废话吗 外国人的脑回路真奇怪
 
 SETATTR : 根据`to_set`来进行修改， 需要注意各种长度修改的情况
 
@@ -338,7 +339,7 @@ yfs_client::setattr(inum ino, size_t size)
 }
 ```
 
-read/write:
+read/write: (这里write最开始我用string去转化data再用replace，然而在后面的点崩了，这里还是要用for)
 
 ```c++
 int
@@ -348,7 +349,7 @@ yfs_client::read(inum ino, size_t size, off_t off, std::string &data)
   int r;
   if((r = ec->get(ino, buf))!= extent_protocol::OK)
     return r;
-  if (off < (int)buf.size())
+  if (off < (off_t)buf.size())
     data = buf.substr(off, size);
   else
     data = "";
@@ -365,7 +366,8 @@ yfs_client::write(inum ino, size_t size, off_t off, const char *data,
     return r;
   if (buf.size() < off + size)
     buf.resize(off + size);
-  buf.replace(off,size,std::string(data),0,size);
+  for(unsigned int i=0;i<size;i++)
+    buf[off+i]=data[i];
   if((r = ec->put(ino, buf)) != extent_protocol::OK)
     return r;
   bytes_written = size;
@@ -460,7 +462,7 @@ yfs_client::unlink(inum parent,const char *name)
 
 这里判断如果是 目录 则直接爆错 如果是文件才删除 XD，感觉还是可以做一个递归的[哦 我错了 我看了一下fuse的 官方的文档，删目录有专门的rmdir]，这部分代码倒没什么问题，如果出现错误估计都是lab1的代码中对不同操作的a/c/m的三个time的标志的修改的部分的代码有问题XD。
 
-然后我通过了ABC测试没有通过E [TODO]
+**如果你通过了ABC没有通过E，那么你可能遇到和我一样的问题，当然按照上面的过程不会发生，在我最开始实现write的时候，用了string去转化`char *`然而 这就崩了XD 要用for进行写**
 
 ### Part 4: SYMLINK, READLINK
 
@@ -715,9 +717,9 @@ index 76f503a..c3bd37a 100644
  }
 
 +int
-+yfs_client::readlink(inum ino, std::string &data)
++yfs_client::readlink(inum ino, std::string &link)
 +{
-+  return ec->get(ino, data);
++  return ec->get(ino, link);
 +}
 +
 ```
@@ -761,7 +763,7 @@ index 78df27f..adba716 100644
 -
 -  /** you may need to add symbolic link related methods here.*/
 +
-+  int readlink(inum ino, std::string &data);
++  int readlink(inum ino, std::string &link);
 +  int symlink(inum parent, const char * name, const char * link, inum & ino_out);
  };
 
@@ -770,13 +772,13 @@ index 78df27f..adba716 100644
 
 至此通过测试D
 
-
 ### 最后测试
 
     % ./grade.sh
     Passed A
     Passed B
     Passed C
+    touch: setting times of 'yfs1/hosts_copy': Function not implemented
     Passed D
     Passed E
     Passed all tests!
