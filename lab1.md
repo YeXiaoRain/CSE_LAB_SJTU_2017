@@ -343,8 +343,6 @@ inode_manager::remove_file(uint32_t inum)
 }
 ```
 
-
-
 # 结束
 
 整个lab的测试过程和之前靠 grep输出评分的lab不同，

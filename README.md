@@ -39,22 +39,22 @@ docker run hello-world
 mkdir cselab
 cd cselab
 docker pull ddnirvana/cselab_env:latest
-sudo docker run --name csecontainer -it ddnirvana/cselab_env:latest /bin/bash
+docker run --name csecontainer -it --privileged --cap-add=ALL ddnirvana/cselab_env:latest /bin/bash
 # now you will enter the csecontainer environment
-git clone http://ipads.se.sjtu.edu.cn:1312/lab/cse-2017.git lab -b lab1
+git clone http://ipads.se.sjtu.edu.cn:1312/lab/cse-2017.git lab
 cd lab
+git checkout -b lab1 origin/lab1
 make
 ./lab1_tester
 ```
+
+**令人窒息的是 我以为只要不用外面的卷 就可以不要privileged 和 capadd 然而lab2以后要在container内使用fuse都需要**
 
 看了一下ddnirvana大佬的这个images 是ubuntu的，也就是说 你想在container搭一个更舒服的开发环境也行，不过如果你本身就用的是 linux真机还是在外面编码 里面运行比较好=。= 
 
 [TODO] 搭一个有vim配置的images 目前个人比较推荐的是`spf13-vim`:`curl https://j.mp/spf13-vim3 -L -o - | sh`
 
 如果你使用`spf13-vim`它有一个自动去多余末尾空格的在`~/.vimrc.before`里把`git config --global alias.vimdiff difftool`的注释"去掉，否则 你的每次会出现很多删除空格的改动XD
-
-
-[TODO] 搜能够不需要privileged
 
 再次访问
 
