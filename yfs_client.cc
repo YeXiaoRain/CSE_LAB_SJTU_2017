@@ -52,21 +52,45 @@ yfs_client::isfile(inum inum)
     if (a.type == extent_protocol::T_FILE) {
         printf("isfile: %lld is a file\n", inum);
         return true;
-    } 
-    printf("isfile: %lld is a dir\n", inum);
+    }
+    printf("isfile: %lld is not a file\n", inum);
     return false;
 }
-/** Your code here for Lab...
- * You may need to add routines such as
- * readlink, issymlink here to implement symbolic link.
- * 
- * */
+
+bool
+yfs_client::issymlink(inum inum)
+{
+    extent_protocol::attr a;
+
+    if (ec->getattr(inum, a) != extent_protocol::OK) {
+        printf("error getting attr\n");
+        return false;
+    }
+
+    if (a.type == extent_protocol::T_SYMLINK) {
+        printf("issymlink: %lld is a symlink\n", inum);
+        return true;
+    }
+    printf("issymlink: %lld is not a symlink\n", inum);
+    return false;
+}
 
 bool
 yfs_client::isdir(inum inum)
 {
-    // Oops! is this still correct when you implement symlink?
-    return ! isfile(inum);
+    extent_protocol::attr a;
+
+    if (ec->getattr(inum, a) != extent_protocol::OK) {
+        printf("error getting attr\n");
+        return false;
+    }
+
+    if (a.type == extent_protocol::T_DIR) {
+        printf("isdir: %lld is a dir\n", inum);
+        return true;
+    }
+    printf("isdir: %lld is not a dir\n", inum);
+    return false;
 }
 
 int
@@ -86,6 +110,28 @@ yfs_client::getfile(inum inum, fileinfo &fin)
     fin.ctime = a.ctime;
     fin.size = a.size;
     printf("getfile %016llx -> sz %llu\n", inum, fin.size);
+
+release:
+    return r;
+}
+
+int
+yfs_client::getsymlink(inum inum, symlinkinfo &symin)
+{
+    int r = OK;
+
+    printf("getsym %016llx\n", inum);
+    extent_protocol::attr a;
+    if (ec->getattr(inum, a) != extent_protocol::OK) {
+        r = IOERR;
+        goto release;
+    }
+
+    symin.atime = a.atime;
+    symin.mtime = a.mtime;
+    symin.ctime = a.ctime;
+    symin.size = a.size;
+    printf("getsym %016llx -> sz %llu\n", inum, symin.size);
 
 release:
     return r;
@@ -154,6 +200,21 @@ yfs_client::mkdir(inum parent, const char *name, mode_t mode, inum &ino_out)
   if (dir_content.find("/" + std::string(name) + "//") != std::string::npos)
     return EXIST;
   if (ec->create(extent_protocol::T_DIR, ino_out) != extent_protocol::OK)
+    return IOERR;
+  return ec->put(parent, dir_content + "/" + std::string(name) + "//" + filename(ino_out));
+}
+
+int
+yfs_client::symlink(inum parent, const char * name, const char * link, inum & ino_out)
+{
+  std::string dir_content;
+  if (ec->get(parent, dir_content) != extent_protocol::OK)
+    return IOERR;
+  if (dir_content.find("/" + std::string(name) + "//") != std::string::npos)
+    return EXIST;
+  if (ec->create(extent_protocol::T_SYMLINK, ino_out) != extent_protocol::OK)
+    return IOERR;
+  if (ec->put(ino_out, std::string(link))!= extent_protocol::OK)
     return IOERR;
   return ec->put(parent, dir_content + "/" + std::string(name) + "//" + filename(ino_out));
 }
@@ -252,5 +313,11 @@ int yfs_client::unlink(inum parent,const char *name)
   if (ec->put(parent, dir_content) != extent_protocol::OK)
     return IOERR;
   return ec->remove(ino);
+}
+
+int
+yfs_client::readlink(inum ino, std::string &link)
+{
+  return ec->get(ino, link);
 }
 
