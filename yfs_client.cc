@@ -148,15 +148,14 @@ yfs_client::create(inum parent, const char *name, mode_t mode, inum &ino_out)
 int
 yfs_client::mkdir(inum parent, const char *name, mode_t mode, inum &ino_out)
 {
-    int r = OK;
-
-    /*
-     * your lab2 code goes here.
-     * note: lookup is what you need to check if directory exist;
-     * after create file or dir, you must remember to modify the parent infomation.
-     */
-
-    return r;
+  std::string dir_content;
+  if (ec->get(parent, dir_content) != extent_protocol::OK)
+    return IOERR;
+  if (dir_content.find("/" + std::string(name) + "//") != std::string::npos)
+    return EXIST;
+  if (ec->create(extent_protocol::T_DIR, ino_out) != extent_protocol::OK)
+    return IOERR;
+  return ec->put(parent, dir_content + "/" + std::string(name) + "//" + filename(ino_out));
 }
 
 int
@@ -234,14 +233,24 @@ yfs_client::write(inum ino, size_t size, off_t off, const char *data,
 
 int yfs_client::unlink(inum parent,const char *name)
 {
-    int r = OK;
-
-    /*
-     * your lab2 code goes here.
-     * note: you should remove the file using ec->remove,
-     * and update the parent directory content.
-     */
-
-    return r;
+  std::string dir_content;
+  std::string file_name = "/" + std::string(name) + "//";
+  if (ec->get(parent, dir_content) != extent_protocol::OK)
+    return IOERR;
+  dir_content+="/";
+  size_t st0, st1 , end;
+  if ((st0 = dir_content.find(file_name)) == std::string::npos)
+    return NOENT;
+  st1 = st0 + file_name.size();
+  if((end = dir_content.find_first_of("/", st1)) == std::string::npos)
+    return NOENT;
+  inum ino = n2i(dir_content.substr(st1, end - st1));
+  if (isdir(ino))
+    return IOERR;
+  dir_content.erase(st0, end - st0);
+  dir_content.erase(dir_content.size()-1);
+  if (ec->put(parent, dir_content) != extent_protocol::OK)
+    return IOERR;
+  return ec->remove(ino);
 }
 
