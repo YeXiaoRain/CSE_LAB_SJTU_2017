@@ -1,4 +1,4 @@
-G# Lab 2: Basic File Server
+# Lab 2: Basic File Server
 
 ## Introduction
 
