@@ -790,3 +790,5 @@ Note that if you encounter a "yfs_client DIED", your filesystem is not working. 
 # TODO
 
 add '.yfs_client.log' to GNUmakefile's `clean:
+
+据说从这个lab开始都是`抄来的` XD，因为我也还没找官方的，所以只是目测 最后一个part属于额外加的，因此才会出现前面说不要动fuse.cc后面又叫你改fuse.cc这种情况，可以说助教是忙于研究生任务 基本都不改tutorial了XD
