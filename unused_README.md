@@ -30,6 +30,12 @@
  * `mit` 的`6.824` [mit 6.824 2013](https://pdos.csail.mit.edu/archive/6.824-2013/) [TODO] 虽然我现在还没把我们的lab 和它完全对上号
  * SJTU 的CSP的[讨论](http://ipads.se.sjtu.edu.cn/courses/qa/?/question/1640?fromuid=354&item_id=5941#!answer_5941)
  * 田生学长的文字讲解[计算机系统工程（原理）编程作业总结](http://blog.renren.com/blog/435494914/921087193#nogo)
+ * [ldaochen](https://github.com/ldaochen/yfs2012)
+ * [gaocegege](https://github.com/gaocegege/CSE-Labs)
+ * [tcbbd](https://github.com/tcbbd/cselabs)
+ * [codeworm96](https://github.com/codeworm96/cse-labs)
+ * [myspring](https://github.com/mycspring/cse-lab)
+ * [wizardforcel](https://github.com/wizardforcel/cselabs)
 
 ## 注意！(关于lab)
  * 请**务必** 使用虚拟机,如若在真机上出现了任何问题,概不负责。
