@@ -71,4 +71,16 @@ make
 
 [TODO] 整理/清理一下原本分支中的杂项
 
+    lab3 grade_backup
+
+    lab1 lab2 lab3 前面分支的评测程序清理，像lab4一样
+
 在代码实现上 以 最小对原有代码的改动第一，易读性第二，简洁第三，效率第四 为原则进行编码。
+
+# TODO
+
+[MIT 6.824](https://pdos.csail.mit.edu/6.824/index.html)
+
+目测从13年开始 lab就不再是c++ 也变了很多，开始用go语言，然后毕竟6.824的标题也是DS不是CSE，它在MIT的架构上6.824(DS)是 要先修6.004(数据结构)+ 6.033(CSE)/6.828(OS)
+
+然后 我看6.033至少2018年是没有lab的XD,他们有一个是[DESIGN PROJECT](http://web.mit.edu/6.033/www/dp.shtml) 是要设计一个系统？？
