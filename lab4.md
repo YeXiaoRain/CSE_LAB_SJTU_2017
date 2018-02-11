@@ -54,7 +54,6 @@ Note: For this lab, you will not have to worry about server failures or client f
 
 We will use the program lock_tester to check the correctness invariant, i.e. whether the server grants each lock just once at any given time, under a variety of conditions. You run lock_tester with the same arguments as lock_demo. A successful run of lock_tester (with a correct lock server) will look like this:
 
-    % sudo docker run -it --privileged --cap-add=ALL -v /home/xx/lab-cse:/home/stu/devlop ddnirvana/cselab_env:latest /bin/bash
     % make
     % ./lock_server 3772 &
     % ./lock_tester 3772
@@ -249,7 +248,7 @@ We will use the same used in previous lab to simulate a distributed system, whic
 
 上面也就是说要在原来的文件系统上 加上 我们刚刚实现的锁服务，来保证文件操作的原子性。
 
-以及 在模拟的时候 用3个container，一个server 一个lock server 一个client
+以及 在模拟的时候 用3个container，一个file server 一个lock server 一个client
 
 **Your Job**
 
@@ -281,15 +280,117 @@ What to lock?
 
 * At one extreme you could have a single lock for the whole file system, so that operations never proceed in parallel. At the other extreme you could lock each entry in a directory, or each field in the attributes structure. Neither of these is a good idea! A single global lock prevents concurrency that would have been okay, for example CREATEs in different directories. Fine-grained locks have high overhead and make deadlock likely, since you often need to hold more than one fine-grained lock.
 
+大锁就行，细粒度也行，但细粒度锁可能会有死锁问题如果你处理不当
+
 * You should associate a lock with each inumber. Use the file or directory's inum as the name of the lock (i.e. pass the inum to acquire and release). The convention should be that any yfs_client operation should acquire the lock on the file or directory it uses, perform the operation, finish updating the extent server (if the operation has side-effects), and then release the lock on the inum. Be careful to release locks even for error returns from yfs_client operations.
+
+锁号直接用inum【那上面说大锁？？？】
 
 * You'll use your lock server from part 1. yfs_client should create and use a lock_client in the same way that it creates and uses its extent_client.
 
 * (Be warned! Do not use a block/offset based locking protocol! Many adopters of a block-id-as-lock ended up refactoring their code in labs later on).
+
+不要基于block或者偏移量做锁，不然你后面的lab会凉凉
+
 Things to watch out for:
 
 This is the first lab that creates files using two different YFS-mounted directories. If you were not careful in earlier labs, you may find that the components that assign inum for newly-created files and directories choose the same identifiers.
+
 If your inode manager relies on pseudo-randomness to generate unique inode number, one possible way to fix this may be to seed the random number generator differently depending on the process's pid. The provided code has already done such seeding for you in the main function of fuse.cc.
 
+Tips和上一个lab一样 这里省略了，大概就是string和`\0`的问题
 
-Tips和上一个lab一样 这里省略了
+---
+
+那么开始实现，首先理清流程
+
+多个`yfs_client`调用文件系统，首先操作的过程 要申请锁，然后操作，结束后放回锁，锁的id直接使用文件的inum
+
+也就是`yfs_client`和lockserver以及extentserver交流，而extentserver与lockserver之间并没有直接交流。
+
+**其中要注意的是，如果yfs_client中有调用自己的函数，那么 可能发生重复锁而产生死锁的问题，比如A(),B()都是yfs_client的函数，但A()的实现中还调用了B。**
+
+一个实现办法是 修改yfs_client的函数，让它变成public和private的分化，类似c/s分化，在public的位置加锁，调用private，private实现具体内容。
+
+另一个实现办法是 修改lock_server,记录每一个锁的拥有者，当拥有者重复提出要锁的时候，假装分配成功。
+
+我采用的是第一种方法。
+
+修改过程打开`yfs_client.h`把所有public的都加上lock就好了
+
+【这里就看到了，我在lab3更应该仿照它的函数写，因为可以说它是有预谋的，它的lab3提供的函数都是r来记录返回，用goto来跳跃到return，这样的写法 acquire和release 就每个函数只需要写一个 XD，而我每个地方return就每个地方都需要release，感觉凉凉XD】
+
+实现的变更 因为太多了，这里就不贴出，直接看我的commit变化就好
+
+---
+
+测试：
+
+在container里先make
+
+    csecontainer> make
+
+新建一个container
+
+    host> docker run --name csecontainer3 -it --privileged --cap-add=ALL ddnirvana/cselab_env:latest /bin/bash
+    stu> su -
+    root> adduser stu sudo
+    root> exit
+
+打开lab3建立过的csecontainer2,在2中删除原来的
+
+    host> docker start -i csecontainer2
+    csecontainer2> sudo rm -rf /home/stu/CSE
+
+通过docker和主机复制文件到两个container中，【这样看的话，用mit的 卷映射就没有复制文件的麻烦 XD
+
+    host> docker cp csecontainer:/home/stu/CSE /tmp/CSE
+    host> docker cp /tmp/CSE/ csecontainer2:/home/stu/CSE
+    host> docker cp /tmp/CSE/ csecontainer3:/home/stu/CSE
+
+在container2和3中查看ip
+
+    csecontainer2/3 > ifconfig | grep inet
+
+在csecontainer修改配置文件`start_client`为对应的ip 例如
+
+    EXTENT_SERVER_HOST=172.17.0.4
+    LOCK_SERVER_HOST=172.17.0.3
+
+这里我的extentserver用container2，而lockserver用container3
+
+    csecontainer2> sudo chown -R stu:root /home/stu/CSE
+    csecontainer2> cd /home/stu/CSE
+    csecontainer2> ./start_extent_server.sh
+
+    csecontainer2> sudo chown -R stu:root /home/stu/CSE
+    csecontainer2> cd /home/stu/CSE
+    csecontainer2> ./start_lock_server.sh
+
+再回到最初的container
+
+    container>./start_client.sh
+    container>./test-lab-4-a ./yfs1 ./yfs2
+    Create then read: OK
+    Unlink: OK
+    Append: OK
+    Readdir: OK
+    Many sequential creates: OK
+    Write 20000 bytes: OK
+    Concurrent creates: OK
+    Concurrent creates of the same file: OK
+    Concurrent create/delete: OK
+    Concurrent creates, same file, same server: OK
+    Concurrent writes to different parts of same file: OK
+    test-lab-4-a: Passed all tests.
+    container>./test-lab-4-b ./yfs1 ./yfs2
+    Create/delete in separate directories: tests completed OK
+    container>./stop_client.sh
+
+通过了测试
+
+# 其它
+
+如果你玩多个container分不清那个是那个，可以去改一下~/.bashrc的输出
+
+part2说着很简单，结果很愚蠢的错误,我调了很久，XD 如果有bug的话，建议通过输出和看log定位XD，这样能调试得快一些。
