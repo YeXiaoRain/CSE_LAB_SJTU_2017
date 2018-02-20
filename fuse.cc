@@ -17,6 +17,7 @@
 #include <arpa/inet.h>
 #include "lang/verify.h"
 #include "yfs_client.h"
+#include "signal.h"
 
 int myid;
 yfs_client *yfs;
@@ -553,6 +554,20 @@ fuseserver_symlink(fuse_req_t req, const char *link, fuse_ino_t parent, const ch
 
 struct fuse_lowlevel_ops fuseserver_oper;
 
+void sig_handler(int no) {
+  switch (no) {
+    case SIGINT:
+      printf("commit a new version\n");
+      break;
+    case SIGUSR1:
+      printf("to previous version\n");
+      break;
+    case SIGUSR2:
+      printf("to next version\n");
+      break;
+  }
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -596,6 +611,10 @@ main(int argc, char *argv[])
     fuseserver_oper.mkdir      = fuseserver_mkdir;
     fuseserver_oper.readlink   = fuseserver_readlink;
     fuseserver_oper.symlink    = fuseserver_symlink;
+
+    signal(SIGINT , sig_handler);
+    signal(SIGUSR1, sig_handler);
+    signal(SIGUSR2, sig_handler);
 
     const char *fuse_argv[20];
     int fuse_argc = 0;
