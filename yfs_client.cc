@@ -209,7 +209,7 @@ yfs_client::setattr(inum ino, filestat st, unsigned long toset)
     lc->release(ino);
     return r;
   }
-  buf.resize(size);
+  buf.resize(st.size);
   lc->release(ino);
   return ec->put(ino, buf);
 }

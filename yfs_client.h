@@ -11,7 +11,7 @@
 #include <vector>
 
 
-#define CA_FILE "./cert/ca.pem:
+#define CA_FILE "./cert/ca.pem"
 #define USERFILE	"./etc/passwd"
 #define GROUPFILE	"./etc/group"
 
