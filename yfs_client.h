@@ -52,7 +52,12 @@ class yfs_client {
 	unsigned short uid;
 	unsigned short gid;
   };
-
+  struct symlinkinfo {
+    unsigned long long size;
+    unsigned long atime;
+    unsigned long mtime;
+    unsigned long ctime;
+  };
   struct dirent {
     std::string name;
     yfs_client::inum inum;
@@ -62,14 +67,18 @@ class yfs_client {
   static std::string filename(inum);
   static inum n2i(std::string);
 
+  bool _isdir(inum);
+
  public:
   yfs_client();
   yfs_client(std::string, std::string, const char*);
 
   bool isfile(inum);
+  bool issymlink(inum);
   bool isdir(inum);
 
   int getfile(inum, fileinfo &);
+  int getsymlink(inum, symlinkinfo &);
   int getdir(inum, dirinfo &);
 
   int setattr(inum, filestat, unsigned long);
@@ -82,6 +91,8 @@ class yfs_client {
   int mkdir(inum , const char *, mode_t , inum &);
 
   int verify(const char* cert_file, unsigned short*);
+  int readlink(inum ino, std::string &link);
+  int symlink(inum parent, const char * name, const char * link, inum & ino_out);
 };
 
 #endif 
