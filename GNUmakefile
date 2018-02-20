@@ -128,7 +128,7 @@ fuse.o: fuse.cc
 -include *.d
 -include rpc/*.d
 
-clean_files=rpc/rpctest rpc/*.o rpc/*.d *.o *.d yfs_client extent_server lock_server lock_tester lock_demo rpctest test-lab-3-a test-lab-3-b test-lab-3-c test-lab-4-a test-lab-4-b rsm_tester lab1_tester
+clean_files=rpc/rpctest rpc/*.o rpc/*.d *.o *.d yfs_client extent_server lock_server lock_tester lock_demo rpctest test-lab-3-a test-lab-3-b test-lab-3-c test-lab-4-a test-lab-4-b rsm_tester lab1_tester yfs_client1.log yfs_client2.log yfs1 yfs2
 .PHONY: clean handin
 clean: 
 	rm $(clean_files) -rf 
