@@ -84,3 +84,10 @@ make
 目测从13年开始 lab就不再是c++ 也变了很多，开始用go语言，然后毕竟6.824的标题也是DS不是CSE，它在MIT的架构上6.824(DS)是 要先修6.004(数据结构)+ 6.033(CSE)/6.828(OS)
 
 然后 我看6.033至少2018年是没有lab的XD,他们有一个是[DESIGN PROJECT](http://web.mit.edu/6.033/www/dp.shtml) 是要设计一个系统？？
+
+重做每一个lab最开始的初始文件
+
+ * 清除 多余的readme 等垃圾文件
+ * 修改GNUMAKE 的clean内容
+ * 修改inode_manager.cc 与lab1的 修改后的对应
+
