@@ -153,12 +153,14 @@ v1->v2->v3->v4->v5->....
 
 每次commit整个磁盘复制新建一个磁盘
 
-每次commit用log记录，之后解析并反向操作log。对于log又分为两种 在文件系统的所在`磁盘`内的log，和外部磁盘的log
+每次commit用log记录，之后解析并反向操作log。对于log又分为三种 在文件系统的所在`磁盘`内的log，和外部`磁盘`的log，内存log
 
 讲道理，符合出题者意图的只有内部磁盘log。
 
 再从代码文件来看操作的流向
 
-用户调用yfs-version发送信号，fuse.cc中接受信号下发给yfs_client,yfs_client通过rpc发送给extent_client
+用户调用yfs-version发送信号，fuse.cc中接受信号下发给yfs_client,yfs_client通过rpc发送给extent_client,
 
-整个实现过程使用自顶向下的实现,具体实现见commit的内容
+【TODO】从讲道理的话，具体的细节应该也是放在extent_client那边也就是server端，而且应该对文件系统的所有文件都加上锁 XD
+
+【所以最后实现只是为了过lab测试，做了不该存在的disk XD
