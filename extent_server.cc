@@ -78,3 +78,20 @@ int extent_server::remove(extent_protocol::extentid_t id, int &)
   return extent_protocol::OK;
 }
 
+int extent_server::commit(int,int &)
+{
+  im->commit();
+  return extent_protocol::OK;
+}
+
+int extent_server::undo(int,int &)
+{
+  im->undo();
+  return extent_protocol::OK;
+}
+
+int extent_server::redo(int,int &)
+{
+  im->redo();
+  return extent_protocol::OK;
+}

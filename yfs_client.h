@@ -93,6 +93,10 @@ class yfs_client {
   int verify(const char* cert_file, unsigned short*);
   int readlink(inum ino, std::string &link);
   int symlink(inum parent, const char * name, const char * link, inum & ino_out);
+
+  void commit_a_new_version();
+  void previous_version();
+  void next_version();
 };
 
 #endif 

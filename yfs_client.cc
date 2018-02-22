@@ -420,3 +420,19 @@ yfs_client::readlink(inum ino, std::string &link)
   return r;
 }
 
+void
+yfs_client::commit_a_new_version()
+{
+  ec->commit();
+}
+
+void
+yfs_client::previous_version()
+{
+  ec->undo();
+}
+void
+yfs_client::next_version()
+{
+  ec->redo();
+}

@@ -53,4 +53,24 @@ extent_client::remove(extent_protocol::extentid_t eid)
   return  cl->call(extent_protocol::remove, eid, r);
 }
 
+extent_protocol::status
+extent_client::commit()
+{
+  int r;
+  return  cl->call(extent_protocol::commit, 0, r);
+}
+
+extent_protocol::status
+extent_client::undo()
+{
+  int r;
+  return  cl->call(extent_protocol::undo, 0, r);
+}
+
+extent_protocol::status
+extent_client::redo()
+{
+  int r;
+  return  cl->call(extent_protocol::redo, 0, r);
+}
 

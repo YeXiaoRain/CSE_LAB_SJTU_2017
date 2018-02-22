@@ -18,10 +18,16 @@ class disk {
  private:
   unsigned char blocks[BLOCK_NUM][BLOCK_SIZE];
 
+  std::vector<unsigned char*>blocks_log;
+  int log_id;
+
  public:
   disk();
   void read_block(uint32_t id, char *buf);
   void write_block(uint32_t id, const char *buf);
+  void commit();
+  void undo();
+  void redo();
 };
 
 // block layer -----------------------------------------
@@ -44,6 +50,9 @@ class block_manager {
   void free_block(uint32_t id);
   void read_block(uint32_t id, char *buf);
   void write_block(uint32_t id, const char *buf);
+  void commit();
+  void undo();
+  void redo();
 };
 
 // inode layer -----------------------------------------
@@ -90,6 +99,9 @@ class inode_manager {
   void write_file(uint32_t inum, const char *buf, int size);
   void remove_file(uint32_t inum);
   void getattr(uint32_t inum, extent_protocol::attr &a);
+  void commit();
+  void undo();
+  void redo();
 };
 
 #endif

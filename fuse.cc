@@ -558,12 +558,15 @@ void sig_handler(int no) {
   switch (no) {
     case SIGINT:
       printf("commit a new version\n");
+      yfs->commit_a_new_version();
       break;
     case SIGUSR1:
       printf("to previous version\n");
+      yfs->previous_version();
       break;
     case SIGUSR2:
       printf("to next version\n");
+      yfs->next_version();
       break;
   }
 }

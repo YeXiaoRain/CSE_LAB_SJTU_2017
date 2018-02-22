@@ -23,6 +23,33 @@ disk::write_block(blockid_t id, const char *buf)
     memcpy(blocks[id], buf, BLOCK_SIZE);
 }
 
+void
+disk::commit()
+{
+  unsigned char * new_log = new unsigned char [DISK_SIZE];
+  memcpy(new_log,blocks,DISK_SIZE);
+  blocks_log.push_back(new_log);
+  log_id++;
+}
+
+void
+disk::undo()
+{
+  if(log_id > 0){
+    log_id -- ;
+    memcpy(blocks,blocks_log[log_id],DISK_SIZE);
+  }
+}
+
+void
+disk::redo()
+{
+  if(log_id + 1 < blocks_log.size()){
+    log_id ++ ;
+    memcpy(blocks,blocks_log[log_id],DISK_SIZE);
+  }
+}
+
 // block layer -----------------------------------------
 
 // Allocate a free disk block.
@@ -77,6 +104,24 @@ void
 block_manager::write_block(uint32_t id, const char *buf)
 {
   d->write_block(id, buf);
+}
+
+void
+block_manager::commit()
+{
+  d->commit();
+}
+
+void
+block_manager::undo()
+{
+  d->undo();
+}
+
+void
+block_manager::redo()
+{
+  d->redo();
 }
 
 // inode layer -----------------------------------------
@@ -281,4 +326,22 @@ inode_manager::remove_file(uint32_t inum)
 {
     write_file(inum, NULL, 0);
     free_inode(inum);
+}
+
+void
+inode_manager::commit()
+{
+  bm->commit();
+}
+
+void
+inode_manager::undo()
+{
+  bm->undo();
+}
+
+void
+inode_manager::redo()
+{
+  bm->redo();
 }
