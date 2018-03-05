@@ -19,14 +19,7 @@ extent_client::extent_client(std::string dst)
   }
 }
 
-extent_protocol::status
-extent_client::get(extent_protocol::extentid_t eid, std::string &buf)
-{
-  extent_protocol::status ret = extent_protocol::OK;
-  ret = cl->call(extent_protocol::get, eid, buf);
-  return ret;
-}
-
+// a demo to show how to use RPC
 extent_protocol::status
 extent_client::getattr(extent_protocol::extentid_t eid, 
 		       extent_protocol::attr &attr)
@@ -37,21 +30,49 @@ extent_client::getattr(extent_protocol::extentid_t eid,
 }
 
 extent_protocol::status
+extent_client::create(uint32_t type, extent_protocol::extentid_t &id)
+{
+  return cl->call(extent_protocol::create, type, id);
+}
+
+extent_protocol::status
+extent_client::get(extent_protocol::extentid_t eid, std::string &buf)
+{
+  return cl->call(extent_protocol::get, eid, buf);
+}
+
+extent_protocol::status
 extent_client::put(extent_protocol::extentid_t eid, std::string buf)
 {
-  extent_protocol::status ret = extent_protocol::OK;
   int r;
-  ret = cl->call(extent_protocol::put, eid, buf, r);
-  return ret;
+  return cl->call(extent_protocol::put, eid, buf, r);
 }
 
 extent_protocol::status
 extent_client::remove(extent_protocol::extentid_t eid)
 {
-  extent_protocol::status ret = extent_protocol::OK;
   int r;
-  ret = cl->call(extent_protocol::remove, eid, r);
-  return ret;
+  return  cl->call(extent_protocol::remove, eid, r);
 }
 
+extent_protocol::status
+extent_client::commit()
+{
+  int r;
+  return  cl->call(extent_protocol::commit, 0, r);
+}
+
+extent_protocol::status
+extent_client::undo()
+{
+  int r;
+  return  cl->call(extent_protocol::undo, 0, r);
+}
+
+extent_protocol::status
+extent_client::redo()
+{
+  int r;
+  return  cl->call(extent_protocol::redo, 0, r);
+}
 

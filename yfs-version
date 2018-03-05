@@ -1,0 +1,72 @@
+#!/usr/bin/perl -w
+
+# copyfs - copy on write filesystem  http://n0x.org/copyfs/
+# Copyright (C) 2004 Nicolas Vigier <boklm@mars-attacks.org>
+#                    Thomas Joubert <widan@net-42.eu.org>
+# This program can be distributed under the terms of the GNU GPL.
+# See the file COPYING.
+
+use strict;
+use warnings;
+
+use IPC::Open3;
+use IO::Select;
+
+use POSIX qw(strftime);
+use Fcntl ':mode';
+use File::Basename;
+use File::stat;
+
+use Errno;
+
+use Getopt::Std;
+
+# Strip the path
+$0 = basename($0);
+
+my %options = ();
+
+# Parse command line
+getopts("cpnh", \%options);
+
+if ($options{h})
+{
+    printf("Usage: $0 [-c] [-p] [-n] [-h]\n");
+    printf("\n");
+    printf("  -h           Show this help\n");
+
+    # Version management
+    printf("  -c           commit a new version\n");
+    printf("  -p           previous version\n");
+    printf("  -n           next version\n");
+
+    exit(0);
+}
+
+# Show by default
+$options{s} = 1
+    if (!$options{r} && !$options{g} && !$options{s} && !$options{l} &&
+	!$options{t} && !$options{u});
+
+if ($options{c})
+{
+		my $pid = qx`pidof yfs_client`;
+        kill 'SIGINT', $pid;
+		exit(0);
+}
+	
+
+if ($options{p})
+{
+		my $pid = qx`pidof yfs_client`;
+        kill 'SIGUSR1', $pid;
+		exit(0);
+}
+
+if ($options{n})
+{
+		my $pid = qx`pidof yfs_client`;
+        kill 'SIGUSR2', $pid;
+		exit(0);
+}
+
