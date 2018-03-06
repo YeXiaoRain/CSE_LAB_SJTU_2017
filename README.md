@@ -90,4 +90,6 @@ make
  * 清除 多余的readme 等垃圾文件
  * 修改GNUMAKE 的clean内容
  * 修改inode_manager.cc 与lab1的 修改后的对应
+ * fix 后面lab的缩进
+ * 完成所有lab [6/7]
 
